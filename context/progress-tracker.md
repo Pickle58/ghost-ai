@@ -38,3 +38,4 @@ Update this file whenever the current phase, active feature, or implementation s
 
 - The home page stays the plain Ghost AI screen. The editor chrome is mounted at `/editor`.
 - Verified the navbar toggle, sidebar slide, both empty tab states, and close button in the browser. Typecheck and lint passed.
+- Closing the project sidebar from its close button returns focus to the navbar toggle.
