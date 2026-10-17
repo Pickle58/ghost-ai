@@ -3,6 +3,7 @@
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
 
+import { AuthControls } from "@/components/auth/auth-controls";
 import { Button } from "@/components/ui/button";
 
 interface EditorNavbarProps {
@@ -43,7 +44,9 @@ export function EditorNavbar({
       <div className="flex min-w-0 flex-1 items-center justify-center">
         {center}
       </div>
-      <div className="flex min-w-0 flex-1 items-center justify-end" />
+      <div className="flex min-w-0 flex-1 items-center justify-end">
+        <AuthControls />
+      </div>
     </header>
   );
 }
