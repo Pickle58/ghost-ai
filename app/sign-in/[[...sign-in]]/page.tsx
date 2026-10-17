@@ -1,12 +1,11 @@
 import { SignIn } from "@clerk/nextjs";
-import { Suspense } from "react";
+
+import { AuthScreen } from "@/components/auth/auth-screen";
 
 export default function SignInPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Suspense fallback={null}>
-        <SignIn />
-      </Suspense>
-    </div>
+    <AuthScreen>
+      <SignIn forceRedirectUrl="/editor" fallbackRedirectUrl="/editor" />
+    </AuthScreen>
   );
 }
