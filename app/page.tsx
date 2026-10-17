@@ -1,12 +1,23 @@
-import { AuthControls } from "@/components/auth/auth-controls";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+
+const signInPath = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in";
 
 export default function Home() {
   return (
-    <div className="relative flex flex-1 items-center justify-center bg-base text-copy-primary">
-      <div className="absolute top-3 right-3">
-        <AuthControls />
-      </div>
-      Ghost AI
-    </div>
+    <Suspense fallback={null}>
+      <HomeGate />
+    </Suspense>
   );
+}
+
+async function HomeGate() {
+  const { isAuthenticated } = await auth();
+
+  if (isAuthenticated) {
+    redirect("/editor");
+  }
+
+  redirect(signInPath);
 }
