@@ -2,15 +2,27 @@
 
 import { useRef, useState, type ReactNode } from "react";
 
+import type { ProjectSummary } from "@/components/editor/mock-projects";
 import { EditorNavbar } from "@/components/editor/editor-navbar";
 import { ProjectSidebar } from "@/components/editor/project-sidebar";
 
 interface EditorShellProps {
   children?: ReactNode;
   center?: ReactNode;
+  projects: readonly ProjectSummary[];
+  onCreateProject: () => void;
+  onRenameProject: (project: ProjectSummary) => void;
+  onDeleteProject: (project: ProjectSummary) => void;
 }
 
-export function EditorShell({ children, center }: EditorShellProps) {
+export function EditorShell({
+  children,
+  center,
+  projects,
+  onCreateProject,
+  onRenameProject,
+  onDeleteProject,
+}: EditorShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarToggleRef = useRef<HTMLButtonElement>(null);
 
@@ -26,6 +38,10 @@ export function EditorShell({ children, center }: EditorShellProps) {
         <div className="absolute inset-0">{children}</div>
         <ProjectSidebar
           isOpen={isSidebarOpen}
+          projects={projects}
+          onCreateProject={onCreateProject}
+          onRenameProject={onRenameProject}
+          onDeleteProject={onDeleteProject}
           onClose={() => {
             setIsSidebarOpen(false);
             sidebarToggleRef.current?.focus();

@@ -1,5 +1,5 @@
-import { EditorShell } from "@/components/editor/editor-shell";
+import { EditorWorkspace } from "@/components/editor/editor-workspace";
 
 export default function EditorLoading() {
-  return <EditorShell />;
+  return <EditorWorkspace />;
 }
