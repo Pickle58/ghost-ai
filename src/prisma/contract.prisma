@@ -1,21 +1,33 @@
 // use prisma-8
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  username  String?
-  name      String?
-  posts     Post[]
-  createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
+enum ProjectStatus {
+  @@type("pg/text@1")
+  DRAFT = "DRAFT"
+  ARCHIVED = "ARCHIVED"
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
+model Project {
+  id             String        @id @default(uuid())
+  ownerId        String
+  name           String
+  description    String?
+  status         ProjectStatus @default(DRAFT)
+  canvasJsonPath String?
+  createdAt      TimestamptzString @default(now())
+  updatedAt      temporal.updatedAtString()
+
+  @@index([ownerId])
+  @@index([createdAt])
+}
+
+model ProjectCollaborator {
+  id        String @id @default(uuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  email     String
   createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
+
+  @@unique([projectId, email])
+  @@index([email])
+  @@index([projectId, createdAt])
 }
