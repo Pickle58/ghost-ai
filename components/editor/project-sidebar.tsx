@@ -3,13 +3,14 @@
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { cn } from "cn";
 
-import type { ProjectSummary } from "@/components/editor/mock-projects";
+import type { ProjectSummary } from "@/components/editor/project-summary";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ProjectSidebarProps {
   isOpen: boolean;
-  projects: readonly ProjectSummary[];
+  ownedProjects: readonly ProjectSummary[];
+  sharedProjects: readonly ProjectSummary[];
   onClose: () => void;
   onCreateProject: () => void;
   onRenameProject: (project: ProjectSummary) => void;
@@ -18,19 +19,13 @@ interface ProjectSidebarProps {
 
 export function ProjectSidebar({
   isOpen,
-  projects,
+  ownedProjects,
+  sharedProjects,
   onClose,
   onCreateProject,
   onRenameProject,
   onDeleteProject,
 }: ProjectSidebarProps) {
-  const ownedProjects = projects.filter((project) =>
-    matchesTab(project, "mine"),
-  );
-  const sharedProjects = projects.filter((project) =>
-    matchesTab(project, "shared"),
-  );
-
   return (
     <>
       {isOpen ? (
@@ -88,8 +83,6 @@ export function ProjectSidebar({
             <ProjectList
               projects={sharedProjects}
               emptyLabel="No shared projects yet."
-              onRenameProject={onRenameProject}
-              onDeleteProject={onDeleteProject}
             />
           </TabsContent>
         </Tabs>
@@ -108,8 +101,8 @@ export function ProjectSidebar({
 interface ProjectListProps {
   projects: readonly ProjectSummary[];
   emptyLabel: string;
-  onRenameProject: (project: ProjectSummary) => void;
-  onDeleteProject: (project: ProjectSummary) => void;
+  onRenameProject?: (project: ProjectSummary) => void;
+  onDeleteProject?: (project: ProjectSummary) => void;
 }
 
 function ProjectList({
@@ -149,8 +142,8 @@ function ProjectList({
 
 interface ProjectActionsProps {
   project: ProjectSummary;
-  onRenameProject: (project: ProjectSummary) => void;
-  onDeleteProject: (project: ProjectSummary) => void;
+  onRenameProject?: (project: ProjectSummary) => void;
+  onDeleteProject?: (project: ProjectSummary) => void;
 }
 
 function ProjectActions({
@@ -158,48 +151,30 @@ function ProjectActions({
   onRenameProject,
   onDeleteProject,
 }: ProjectActionsProps) {
-  switch (project.ownership) {
-    case "owned":
-      return (
-        <div className="flex shrink-0 items-center">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`Rename ${project.name}`}
-            onClick={() => onRenameProject(project)}
-          >
-            <Pencil className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`Delete ${project.name}`}
-            onClick={() => onDeleteProject(project)}
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      );
-    case "shared":
-      return null;
-    default: {
-      const exhaustive: never = project.ownership;
-      return exhaustive;
-    }
+  if (!onRenameProject || !onDeleteProject) {
+    return null;
   }
-}
 
-function matchesTab(project: ProjectSummary, tab: "mine" | "shared"): boolean {
-  switch (project.ownership) {
-    case "owned":
-      return tab === "mine";
-    case "shared":
-      return tab === "shared";
-    default: {
-      const exhaustive: never = project.ownership;
-      return exhaustive;
-    }
-  }
+  return (
+    <div className="flex shrink-0 items-center">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label={`Rename ${project.name}`}
+        onClick={() => onRenameProject(project)}
+      >
+        <Pencil className="size-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label={`Delete ${project.name}`}
+        onClick={() => onDeleteProject(project)}
+      >
+        <Trash2 className="size-4" />
+      </Button>
+    </div>
+  );
 }

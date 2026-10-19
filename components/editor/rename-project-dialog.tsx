@@ -10,6 +10,7 @@ interface RenameProjectDialogProps {
   open: boolean;
   name: string;
   currentName: string;
+  error: string | null;
   isLoading: boolean;
   onNameChange: (name: string) => void;
   onOpenChange: (open: boolean) => void;
@@ -20,6 +21,7 @@ export function RenameProjectDialog({
   open,
   name,
   currentName,
+  error,
   isLoading,
   onNameChange,
   onOpenChange,
@@ -81,6 +83,7 @@ export function RenameProjectDialog({
             onKeyDown={handleNameKeyDown}
           />
         </label>
+        {error ? <p className="mt-3 text-sm text-state-error">{error}</p> : null}
       </form>
     </EditorDialog>
   );

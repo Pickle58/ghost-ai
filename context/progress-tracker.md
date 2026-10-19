@@ -4,19 +4,21 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Prisma 8 data layer
+- Editor workspace
 
 ## Current Goal
 
-- The Prisma 8 contract has `Project`, `ProjectCollaborator`, and `ProjectStatus`. The first schema is applied to PostgreSQL. Project APIs and the editor are not wired to the database.
+- The editor home loads the signed-in user's owned and shared projects and creates, renames, and deletes through the project API. The `/editor/[roomId]` workspace shell is next.
 
 ## Completed
 
 - Design system: shadcn/ui configured with Button, Card, Dialog, Input, Tabs, Textarea, and ScrollArea. `lucide-react` is installed. `lib/utils.ts` exports `cn()`. Theme tokens in `app/globals.css` drive the dark palette, and shadcn semantic colors alias those tokens.
 - Editor chrome: fixed-height navbar with a sidebar toggle, an overlay project sidebar, and a reusable dialog pattern. The sidebar has My Projects and Shared tabs and a full-width New Project button.
 - Clerk: `@clerk/nextjs` and `@clerk/ui` are installed. `ClerkProvider` wraps the app inside `<body>` with the shadcn theme. `proxy.ts` runs `clerkMiddleware()`. Sign-in and sign-up routes exist. Sign-in, sign-up, and the user button render on the home screen and in the editor navbar. The project is linked to the existing Ghost AI Clerk application. Routes stay public until each page calls `await auth.protect()`.
-- Project dialogs: `/editor` centers a home prompt with a New Project button. Create, rename, and delete dialogs are wired from that button and from the sidebar. Owned projects show rename and delete; shared projects do not. The create dialog shows a live slug. A mobile scrim closes the sidebar. `useProjectDialogs` holds dialog, form, and loading state. Projects are mock data, with no API calls or persistence.
+- Project dialogs: `/editor` centers a home prompt with a New Project button. Create, rename, and delete dialogs are wired from that button and from the sidebar. Owned projects show rename and delete; shared projects do not. The create dialog shows a live slug. A mobile scrim closes the sidebar. Dialog state started in `useProjectDialogs` with mock projects.
 - Prisma 8 data layer: `src/prisma/contract.prisma` defines `Project`, `ProjectCollaborator`, and `ProjectStatus` only. `ownerId` is the Clerk user ID as text. IDs are `String @id @default(uuid())`. Collaborator delete cascades from the project. Timestamps are `TimestamptzString` and `temporal.updatedAtString()`. Slugs are not stored. `prisma contract emit` and `prisma db init` succeeded against PostgreSQL. `src/prisma/db.ts` is the only runtime.
+- Project APIs: `GET` and `POST /api/projects`, plus `PATCH` and `DELETE /api/projects/[projectId]`. The signed-in Clerk user id is `ownerId`. A missing or blank create name becomes `Untitled Project`. Unsigned requests return 401. Another user's project returns 403. A missing project returns 404.
+- Editor home wiring: `/editor` is a server component. It loads owned projects with `listOwnedProjects` and shared projects with `listSharedProjects`, then passes both lists to the sidebar. `useProjectActions` owns the dialogs and calls the project API. Create builds a room ID from the slug plus a short unique suffix, stores that ID as the project ID, and navigates to `/editor/[roomId]`. Rename refreshes the home list. Delete refreshes it, or redirects to `/editor` when the deleted project is the active workspace. Shared projects have no rename or delete actions. Mock project data is gone.
 
 ## In Progress
 
@@ -24,9 +26,9 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Project APIs (`06-project-apis.md`): list, create, rename, and delete projects. Do not start that slice until asked.
+- Build the `/editor/[roomId]` workspace shell (`08-editor-workspace-shell.md`). Do not start that slice until asked.
 - Decide sign-up and sign-in identifiers and social providers.
-- Protect individual pages, Route Handlers, and Server Actions with `await auth.protect()` when those routes need a signed-in user.
+- Protect individual pages and Server Actions with `await auth.protect()` when those routes need a signed-in user. Project API routes return 401 from `auth()` instead, because `auth.protect()` redirects.
 
 ## Open Questions
 
@@ -38,8 +40,9 @@ Update this file whenever the current phase, active feature, or implementation s
 - The app is dark only. `:root` and `.dark` use the same palette, and `<html>` carries the `dark` class so component `dark:` styles apply.
 - shadcn uses the `base-nova` style (Base UI). `cn()` is the `cn` package, re-exported from `lib/utils.ts`.
 - Editor chrome lives in `components/editor`. `EditorShell` owns sidebar open state. The project sidebar is absolutely positioned over the canvas, so opening it does not change canvas layout. `EditorDialog` applies theme tokens for title, description, and footer actions. `components/ui/dialog.tsx` stays unmodified.
-- Project dialog state lives in `hooks/use-project-dialogs.ts`. Mock projects live in `components/editor/mock-projects.ts`. Slugs are derived with `toProjectSlug` and are not stored. Submitting a dialog does not persist anything.
+- Project dialog state and mutations live in `hooks/use-project-actions.ts`. The create dialog previews a room ID from `toRoomId`: the slugified name plus a 6-character suffix. That room ID is the project ID and the future Liveblocks room ID. `POST /api/projects` accepts this id when it matches the room ID shape; omitted ids still use the schema UUID default. A taken id returns 409. Slugs are not a separate column.
 - Project metadata lives in PostgreSQL through `src/prisma/db.ts`. `ownerId` stores the Clerk user ID. `canvasJsonPath` is the blob reference and stays empty until canvas storage exists.
+- Project mutations check `id` and `ownerId` together. A miss is then classified: no row is 404, a row owned by someone else is 403. Lists are newest `createdAt` first, then `id`. Rename rejects a missing or blank name. Create accepts a room ID only when the caller sends one; otherwise the schema UUID default still applies. The caller cannot set `ownerId`.
 
 ## Session Notes
 
@@ -74,3 +77,10 @@ Update this file whenever the current phase, active feature, or implementation s
 ```
 
 - The temporary smoke script was removed. `pnpm run build` compiles, then fails only on the existing `HomeGate` type error in `app/page.tsx` (`() => Promise<void>` is not a valid JSX component).
+- ESLint ignores generated Prisma types: `migrations/snapshots/**` and `src/prisma/contract.d.ts`. Hand-edited files under `migrations/app/` stay linted.
+- `HomeGate` now returns `null` after `redirect()`, so the home route typechecks. Behavior is unchanged: a signed-in visit still goes to `/editor`, and a signed-out visit still goes to sign-in.
+- Project API smoke test created a row, confirmed the owner could list and rename it, confirmed a second user id got `forbidden` for rename and delete, then deleted the row. A later delete and rename of that id returned `not_found`.
+- Unsigned `GET`, `POST`, `PATCH`, and `DELETE` against the production server each returned `401` with `{ "error": "Unauthorized" }`.
+- `pnpm run build` passes. `export const runtime` is not allowed on these routes while `cacheComponents` is enabled, so the handlers use the default runtime.
+- Verified the wired editor home with a temporary Clerk test user, then deleted that user. A signed-out visit to `/editor` redirects to sign-in. The empty owned and shared lists render. Creating "Checkout Service" previewed `checkout-service-opfqox`, `POST /api/projects` returned 201, and the browser navigated to `/editor/checkout-service-opfqox`. That workspace route is still a 404 until the workspace shell exists. Returning to `/editor` listed the project. Rename to "Payments Service" updated the sidebar after `PATCH` 200. Delete showed the project name, `DELETE` returned 200, and the list refreshed to empty. `pnpm run build` passes.
+- Opening `/editor` in development prints a `pg` SSL mode warning from the database connection. Next.js shows it in the dev overlay. The page still returns 200.
