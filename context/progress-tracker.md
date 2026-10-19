@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Project dialogs and editor home
+- Prisma 8 data layer
 
 ## Current Goal
 
-- `/editor` shows a centered home prompt, and create, rename, and delete dialogs are wired from the home screen and the project sidebar. Data is still mock-only.
+- The Prisma 8 contract and runtime are scaffolded. Project and collaborator models are not in the contract yet, and no database migration has been applied.
 
 ## Completed
 
@@ -49,3 +49,5 @@ Update this file whenever the current phase, active feature, or implementation s
 - `tsconfig.json` sets `baseUrl` so `@/` resolves from the project root, and `.claude` skill templates are excluded from the app typecheck.
 - Project Clerk skills are pruned to `.claude/skills`: `clerk`, `clerk-nextjs-patterns`, `clerk-custom-ui`, `clerk-cli`, and `clerk-setup`. `skills-lock.json` lists only those five so a later skills update does not restore the rest.
 - Verified the editor home, live slug preview, owned-project rename and delete actions, the shared-project list without actions, Enter-to-submit on rename, the destructive delete confirmation, the sidebar New Project button, and the mobile scrim. On a desktop width the scrim is hidden and the sidebar still overlays the canvas. Lint passed. Typecheck of the new editor files passed; an existing redirect typing error remains in the home route.
+- `toProjectSlug` folds diacritics before slugifying. A nonblank name that still produces an empty slug keeps Create disabled and shows a validation message. `context/current-issues.md` stays local and is no longer tracked.
+- Prisma 8 ORM init replaced the Prisma 7 client. The contract is `src/prisma/contract.prisma`, the runtime is `src/prisma/db.ts`, and `prisma.config.ts` points at that contract. `@prisma/client`, `@prisma/adapter-pg`, and `pg` are removed. The contract still has the starter `User` and `Post` models. `DATABASE_URL` is not set, and `prisma db init` has not been run.

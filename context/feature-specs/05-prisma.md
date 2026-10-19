@@ -2,11 +2,11 @@
 
 ## Goal
 
-Prisma is already installed. Add the project data models, Prisma client singleton, and first migration.
+Prisma 8 is installed. Replace the starter contract with the project data models, then apply the first database migration.
 
 ## Models
 
-Create `prisma/models/project.prisma`.
+Edit `src/prisma/contract.prisma`.
 
 Add `Project`:
 
@@ -28,33 +28,36 @@ Add `ProjectCollaborator`:
 
 Do not add extra fields unless required by Prisma.
 
+Use Prisma 8 PSL. Set `onDelete: Cascade` on the collaborator relation. Store timestamps as `TimestamptzString`, because this app runs on Node 24, which has no global `Temporal`. Declare the status enum with a Prisma 8 `enum` block.
+
+After editing the contract, run `pnpm exec prisma contract emit`.
+
 ## Prisma Client
 
-Create `lib/prisma.ts` as a cached singleton.
+The runtime entry is `src/prisma/db.ts`. It exports `db` from `@prisma/orm-postgres/runtime`, loaded with the emitted contract and `DATABASE_URL`.
 
-Branch by `DATABASE_URL`:
-
-- if it starts with `prisma+postgres://`, use Accelerate
-- otherwise use direct `@prisma/adapter-pg`
-
-Cache the client on `global` in development for hot reloads.
+Import `db` from `@/src/prisma/db` at server boundaries. Do not add a second client in `lib/prisma.ts`.
 
 ## Migration
 
-Run the migration and generate the client.
+Set `DATABASE_URL` to PostgreSQL 15 or newer, then apply the contract with `pnpm exec prisma db init` for the first database. Later contract changes go through `prisma migration plan` and `prisma db migrate`.
 
 ## Dependencies
 
-Already installed:
+Installed:
 
 - `prisma`
-- `@prisma/client`
-- `@prisma/adapter-pg`
-- `pg`
+- `@prisma/orm-postgres`
+- `@prisma/cli-engine`
+- `dotenv`
+
+`@prisma/client`, `@prisma/adapter-pg`, and `pg` are not part of this client.
+
+`prebuild` runs `prisma contract emit` so `next build` has a current contract. Next.js has no Prisma emit plugin.
 
 ## Check When Done
 
-- schema has both models with correct relations and indexes
-- `lib/prisma.ts` exports one cached Prisma instance
-- migration runs successfully
-- `npm run build` passes
+- the contract has both models with correct relations and indexes
+- `src/prisma/db.ts` exports one `db` instance
+- the first migration has been applied
+- `pnpm run build` passes

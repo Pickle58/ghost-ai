@@ -94,6 +94,7 @@ function canSubmit(
 ): boolean {
   switch (dialog) {
     case "create":
+      return name.trim().length > 0 && toProjectSlug(name).length > 0;
     case "rename":
       return name.trim().length > 0;
     case "delete":

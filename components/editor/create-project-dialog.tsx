@@ -30,6 +30,8 @@ export function CreateProjectDialog({
     onSubmit();
   }
 
+  const slugMissing = name.trim().length > 0 && slug.length === 0;
+
   return (
     <EditorDialog
       open={open}
@@ -48,7 +50,7 @@ export function CreateProjectDialog({
           <Button
             type="submit"
             form="create-project-form"
-            disabled={isLoading || name.trim().length === 0}
+            disabled={isLoading || name.trim().length === 0 || slug.length === 0}
           >
             Create
           </Button>
@@ -70,6 +72,10 @@ export function CreateProjectDialog({
             value={name}
             autoComplete="off"
             disabled={isLoading}
+            aria-invalid={slugMissing}
+            aria-describedby={
+              slugMissing ? "create-project-slug-error" : undefined
+            }
             onChange={(event) => onNameChange(event.target.value)}
           />
         </label>
@@ -87,6 +93,11 @@ export function CreateProjectDialog({
           >
             {slug}
           </p>
+          {slugMissing ? (
+            <p id="create-project-slug-error" className="text-sm text-state-error">
+              Use at least one letter or number.
+            </p>
+          ) : null}
         </div>
       </form>
     </EditorDialog>
