@@ -9,6 +9,8 @@ import { ProjectSidebar } from "@/components/editor/project-sidebar";
 interface EditorShellProps {
   children?: ReactNode;
   center?: ReactNode;
+  actions?: ReactNode;
+  activeProjectId?: string;
   ownedProjects: readonly ProjectSummary[];
   sharedProjects: readonly ProjectSummary[];
   onCreateProject: () => void;
@@ -19,6 +21,8 @@ interface EditorShellProps {
 export function EditorShell({
   children,
   center,
+  actions,
+  activeProjectId,
   ownedProjects,
   sharedProjects,
   onCreateProject,
@@ -29,17 +33,19 @@ export function EditorShell({
   const sidebarToggleRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col bg-base text-copy-primary">
+    <div className="flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-base text-copy-primary">
       <EditorNavbar
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={() => setIsSidebarOpen((open) => !open)}
         sidebarToggleRef={sidebarToggleRef}
         center={center}
+        actions={actions}
       />
       <div className="relative min-h-0 flex-1">
         <div className="absolute inset-0">{children}</div>
         <ProjectSidebar
           isOpen={isSidebarOpen}
+          activeProjectId={activeProjectId}
           ownedProjects={ownedProjects}
           sharedProjects={sharedProjects}
           onCreateProject={onCreateProject}

@@ -2,6 +2,7 @@
 
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { cn } from "cn";
+import Link from "next/link";
 
 import type { ProjectSummary } from "@/components/editor/project-summary";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ProjectSidebarProps {
   isOpen: boolean;
+  activeProjectId?: string;
   ownedProjects: readonly ProjectSummary[];
   sharedProjects: readonly ProjectSummary[];
   onClose: () => void;
@@ -19,6 +21,7 @@ interface ProjectSidebarProps {
 
 export function ProjectSidebar({
   isOpen,
+  activeProjectId,
   ownedProjects,
   sharedProjects,
   onClose,
@@ -75,6 +78,7 @@ export function ProjectSidebar({
             <ProjectList
               projects={ownedProjects}
               emptyLabel="No projects yet."
+              activeProjectId={activeProjectId}
               onRenameProject={onRenameProject}
               onDeleteProject={onDeleteProject}
             />
@@ -83,6 +87,7 @@ export function ProjectSidebar({
             <ProjectList
               projects={sharedProjects}
               emptyLabel="No shared projects yet."
+              activeProjectId={activeProjectId}
             />
           </TabsContent>
         </Tabs>
@@ -101,6 +106,7 @@ export function ProjectSidebar({
 interface ProjectListProps {
   projects: readonly ProjectSummary[];
   emptyLabel: string;
+  activeProjectId?: string;
   onRenameProject?: (project: ProjectSummary) => void;
   onDeleteProject?: (project: ProjectSummary) => void;
 }
@@ -108,6 +114,7 @@ interface ProjectListProps {
 function ProjectList({
   projects,
   emptyLabel,
+  activeProjectId,
   onRenameProject,
   onDeleteProject,
 }: ProjectListProps) {
@@ -121,21 +128,35 @@ function ProjectList({
 
   return (
     <ul className="flex flex-col gap-1">
-      {projects.map((project) => (
-        <li
-          key={project.id}
-          className="flex items-center gap-1 rounded-xl px-2 py-1"
-        >
-          <span className="min-w-0 flex-1 truncate text-sm text-copy-primary">
-            {project.name}
-          </span>
-          <ProjectActions
-            project={project}
-            onRenameProject={onRenameProject}
-            onDeleteProject={onDeleteProject}
-          />
-        </li>
-      ))}
+      {projects.map((project) => {
+        const isActive = project.id === activeProjectId;
+
+        return (
+          <li
+            key={project.id}
+            className={cn(
+              "flex items-center gap-1 rounded-xl px-2 py-1",
+              isActive && "bg-accent-dim",
+            )}
+          >
+            <Link
+              href={`/editor/${project.id}`}
+              aria-current={isActive ? "page" : undefined}
+              className={cn(
+                "min-w-0 flex-1 truncate rounded-lg px-1 py-1 text-sm text-copy-primary",
+                isActive && "font-medium text-brand",
+              )}
+            >
+              {project.name}
+            </Link>
+            <ProjectActions
+              project={project}
+              onRenameProject={onRenameProject}
+              onDeleteProject={onDeleteProject}
+            />
+          </li>
+        );
+      })}
     </ul>
   );
 }

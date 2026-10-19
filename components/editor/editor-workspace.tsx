@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { CreateProjectDialog } from "@/components/editor/create-project-dialog";
 import { DeleteProjectDialog } from "@/components/editor/delete-project-dialog";
 import { EditorHome } from "@/components/editor/editor-home";
@@ -11,11 +13,19 @@ import { useProjectActions } from "@/hooks/use-project-actions";
 interface EditorWorkspaceProps {
   ownedProjects: readonly ProjectSummary[];
   sharedProjects: readonly ProjectSummary[];
+  center?: ReactNode;
+  actions?: ReactNode;
+  activeProjectId?: string;
+  children?: ReactNode;
 }
 
 export function EditorWorkspace({
   ownedProjects,
   sharedProjects,
+  center,
+  actions,
+  activeProjectId,
+  children,
 }: EditorWorkspaceProps) {
   const {
     dialog,
@@ -41,13 +51,16 @@ export function EditorWorkspace({
   return (
     <>
       <EditorShell
+        center={center}
+        actions={actions}
+        activeProjectId={activeProjectId}
         ownedProjects={ownedProjects}
         sharedProjects={sharedProjects}
         onCreateProject={openCreate}
         onRenameProject={openRename}
         onDeleteProject={openDelete}
       >
-        <EditorHome onCreateProject={openCreate} />
+        {children ?? <EditorHome onCreateProject={openCreate} />}
       </EditorShell>
       <CreateProjectDialog
         open={dialog === "create"}

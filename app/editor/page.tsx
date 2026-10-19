@@ -1,9 +1,10 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { EditorWorkspace } from "@/components/editor/editor-workspace";
 import { toProjectSummary } from "@/components/editor/project-summary";
+import { getClerkIdentity } from "@/lib/project-access";
 import { listOwnedProjects, listSharedProjects } from "@/lib/projects";
 
 const signInPath = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in";
@@ -26,14 +27,14 @@ async function EditorProjects() {
     redirect(signInPath);
   }
 
-  const user = await currentUser();
-  const email =
-    user?.primaryEmailAddress?.emailAddress ??
-    user?.emailAddresses[0]?.emailAddress ??
-    "";
+  const identity = await getClerkIdentity();
+  if (!identity) {
+    redirect(signInPath);
+  }
+
   const [ownedProjects, sharedProjects] = await Promise.all([
-    listOwnedProjects(userId),
-    listSharedProjects(email, userId),
+    listOwnedProjects(identity.userId),
+    listSharedProjects(identity.email, identity.userId),
   ]);
 
   return (

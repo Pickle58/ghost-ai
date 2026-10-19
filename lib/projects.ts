@@ -1,3 +1,4 @@
+import { normalizeEmail } from "@/lib/email";
 import type { Models } from "@/src/prisma/contract";
 import { db } from "@/src/prisma/db";
 
@@ -23,7 +24,7 @@ export async function listSharedProjects(
   email: string,
   ownerId: string,
 ): Promise<ProjectRecord[]> {
-  const normalizedEmail = email.trim();
+  const normalizedEmail = normalizeEmail(email);
   if (normalizedEmail === "") {
     return [];
   }
@@ -52,13 +53,21 @@ export async function createOwnedProject(
     }
   }
 
-  const project = await db.orm.public.Project.create({
-    ownerId,
-    name,
-    ...(id ? { id } : {}),
-  });
+  try {
+    const project = await db.orm.public.Project.create({
+      ownerId,
+      name,
+      ...(id ? { id } : {}),
+    });
 
-  return { status: "ok", project };
+    return { status: "ok", project };
+  } catch (error) {
+    if (id && isUniqueViolation(error)) {
+      return { status: "conflict" };
+    }
+
+    throw error;
+  }
 }
 
 export async function renameOwnedProject(
@@ -102,6 +111,19 @@ async function classifyMissingProject(
   }
 
   return { status: "forbidden" };
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  if (!Object.hasOwn(error, "kind") || !Object.hasOwn(error, "sqlState")) {
+    return false;
+  }
+
+  const queryError = error as { kind: unknown; sqlState: unknown };
+  return queryError.kind === "sql_query" && queryError.sqlState === "23505";
 }
 
 function compareNewestFirst(a: ProjectRecord, b: ProjectRecord): number {
