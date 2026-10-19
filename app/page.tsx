@@ -15,9 +15,6 @@ export default function Home() {
 async function HomeGate() {
   const { isAuthenticated } = await auth();
 
-  if (isAuthenticated) {
-    redirect("/editor");
-  }
-
-  redirect(signInPath);
+  redirect(isAuthenticated ? "/editor" : signInPath);
+  return null;
 }

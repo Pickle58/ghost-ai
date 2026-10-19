@@ -1,5 +1,5 @@
 import { EditorWorkspace } from "@/components/editor/editor-workspace";
 
 export default function EditorLoading() {
-  return <EditorWorkspace />;
+  return <EditorWorkspace ownedProjects={[]} sharedProjects={[]} />;
 }

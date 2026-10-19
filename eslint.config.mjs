@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Prisma emits these. Hand-edited migration scripts stay linted.
+    "migrations/snapshots/**",
+    "src/prisma/contract.d.ts",
   ]),
 ]);
 

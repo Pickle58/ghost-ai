@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 interface DeleteProjectDialogProps {
   open: boolean;
   projectName: string;
+  error: string | null;
   isLoading: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
@@ -14,6 +15,7 @@ interface DeleteProjectDialogProps {
 export function DeleteProjectDialog({
   open,
   projectName,
+  error,
   isLoading,
   onOpenChange,
   onConfirm,
@@ -44,6 +46,8 @@ export function DeleteProjectDialog({
           </Button>
         </>
       }
-    />
+    >
+      {error ? <p className="text-sm text-state-error">{error}</p> : null}
+    </EditorDialog>
   );
 }

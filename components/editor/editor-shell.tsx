@@ -2,14 +2,15 @@
 
 import { useRef, useState, type ReactNode } from "react";
 
-import type { ProjectSummary } from "@/components/editor/mock-projects";
 import { EditorNavbar } from "@/components/editor/editor-navbar";
+import type { ProjectSummary } from "@/components/editor/project-summary";
 import { ProjectSidebar } from "@/components/editor/project-sidebar";
 
 interface EditorShellProps {
   children?: ReactNode;
   center?: ReactNode;
-  projects: readonly ProjectSummary[];
+  ownedProjects: readonly ProjectSummary[];
+  sharedProjects: readonly ProjectSummary[];
   onCreateProject: () => void;
   onRenameProject: (project: ProjectSummary) => void;
   onDeleteProject: (project: ProjectSummary) => void;
@@ -18,7 +19,8 @@ interface EditorShellProps {
 export function EditorShell({
   children,
   center,
-  projects,
+  ownedProjects,
+  sharedProjects,
   onCreateProject,
   onRenameProject,
   onDeleteProject,
@@ -38,7 +40,8 @@ export function EditorShell({
         <div className="absolute inset-0">{children}</div>
         <ProjectSidebar
           isOpen={isSidebarOpen}
-          projects={projects}
+          ownedProjects={ownedProjects}
+          sharedProjects={sharedProjects}
           onCreateProject={onCreateProject}
           onRenameProject={onRenameProject}
           onDeleteProject={onDeleteProject}

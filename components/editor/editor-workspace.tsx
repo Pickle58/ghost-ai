@@ -4,24 +4,33 @@ import { CreateProjectDialog } from "@/components/editor/create-project-dialog";
 import { DeleteProjectDialog } from "@/components/editor/delete-project-dialog";
 import { EditorHome } from "@/components/editor/editor-home";
 import { EditorShell } from "@/components/editor/editor-shell";
+import type { ProjectSummary } from "@/components/editor/project-summary";
 import { RenameProjectDialog } from "@/components/editor/rename-project-dialog";
-import { useProjectDialogs } from "@/hooks/use-project-dialogs";
+import { useProjectActions } from "@/hooks/use-project-actions";
 
-export function EditorWorkspace() {
+interface EditorWorkspaceProps {
+  ownedProjects: readonly ProjectSummary[];
+  sharedProjects: readonly ProjectSummary[];
+}
+
+export function EditorWorkspace({
+  ownedProjects,
+  sharedProjects,
+}: EditorWorkspaceProps) {
   const {
-    projects,
     dialog,
     activeProject,
     name,
     setName,
-    slug,
+    roomId,
     isLoading,
+    error,
     openCreate,
     openRename,
     openDelete,
     closeDialog,
     submit,
-  } = useProjectDialogs();
+  } = useProjectActions();
 
   function handleOpenChange(open: boolean) {
     if (!open) {
@@ -32,7 +41,8 @@ export function EditorWorkspace() {
   return (
     <>
       <EditorShell
-        projects={projects}
+        ownedProjects={ownedProjects}
+        sharedProjects={sharedProjects}
         onCreateProject={openCreate}
         onRenameProject={openRename}
         onDeleteProject={openDelete}
@@ -42,7 +52,8 @@ export function EditorWorkspace() {
       <CreateProjectDialog
         open={dialog === "create"}
         name={name}
-        slug={slug}
+        roomId={roomId}
+        error={error}
         isLoading={isLoading}
         onNameChange={setName}
         onOpenChange={handleOpenChange}
@@ -52,6 +63,7 @@ export function EditorWorkspace() {
         open={dialog === "rename"}
         name={name}
         currentName={activeProject?.name ?? ""}
+        error={error}
         isLoading={isLoading}
         onNameChange={setName}
         onOpenChange={handleOpenChange}
@@ -60,6 +72,7 @@ export function EditorWorkspace() {
       <DeleteProjectDialog
         open={dialog === "delete"}
         projectName={activeProject?.name ?? ""}
+        error={error}
         isLoading={isLoading}
         onOpenChange={handleOpenChange}
         onConfirm={submit}

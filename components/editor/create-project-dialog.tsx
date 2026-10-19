@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 interface CreateProjectDialogProps {
   open: boolean;
   name: string;
-  slug: string;
+  roomId: string;
+  error: string | null;
   isLoading: boolean;
   onNameChange: (name: string) => void;
   onOpenChange: (open: boolean) => void;
@@ -19,7 +20,8 @@ interface CreateProjectDialogProps {
 export function CreateProjectDialog({
   open,
   name,
-  slug,
+  roomId,
+  error,
   isLoading,
   onNameChange,
   onOpenChange,
@@ -30,7 +32,7 @@ export function CreateProjectDialog({
     onSubmit();
   }
 
-  const slugMissing = name.trim().length > 0 && slug.length === 0;
+  const roomIdMissing = name.trim().length > 0 && roomId.length === 0;
 
   return (
     <EditorDialog
@@ -50,7 +52,9 @@ export function CreateProjectDialog({
           <Button
             type="submit"
             form="create-project-form"
-            disabled={isLoading || name.trim().length === 0 || slug.length === 0}
+            disabled={
+              isLoading || name.trim().length === 0 || roomId.length === 0
+            }
           >
             Create
           </Button>
@@ -72,32 +76,33 @@ export function CreateProjectDialog({
             value={name}
             autoComplete="off"
             disabled={isLoading}
-            aria-invalid={slugMissing}
+            aria-invalid={roomIdMissing}
             aria-describedby={
-              slugMissing ? "create-project-slug-error" : undefined
+              roomIdMissing ? "create-project-room-error" : undefined
             }
             onChange={(event) => onNameChange(event.target.value)}
           />
         </label>
         <div className="flex flex-col gap-1">
           <span
-            id="create-project-slug-label"
+            id="create-project-room-label"
             className="text-xs text-copy-muted"
           >
-            Slug
+            Room ID
           </span>
           <p
-            aria-labelledby="create-project-slug-label"
+            aria-labelledby="create-project-room-label"
             aria-live="polite"
-            className="min-h-5 font-mono text-sm text-copy-secondary"
+            className="min-h-5 font-mono text-sm break-all text-copy-secondary"
           >
-            {slug}
+            {roomId}
           </p>
-          {slugMissing ? (
-            <p id="create-project-slug-error" className="text-sm text-state-error">
+          {roomIdMissing ? (
+            <p id="create-project-room-error" className="text-sm text-state-error">
               Use at least one letter or number.
             </p>
           ) : null}
+          {error ? <p className="text-sm text-state-error">{error}</p> : null}
         </div>
       </form>
     </EditorDialog>
