@@ -4,6 +4,7 @@ import { PanelRightClose, PanelRightOpen, Share2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "cn";
 
+import { CanvasRoom } from "@/components/canvas/canvas-room";
 import { EditorWorkspace } from "@/components/editor/editor-workspace";
 import type { ProjectSummary } from "@/components/editor/project-summary";
 import { ShareDialog } from "@/components/editor/share-dialog";
@@ -46,9 +47,7 @@ export function EditorRoom({
         }
       >
         <div className="relative h-full bg-base">
-          <div className="flex h-full items-center justify-center px-6">
-            <p className="text-sm text-copy-muted">The canvas will appear here.</p>
-          </div>
+          <CanvasRoom roomId={project.id} />
           <AiSidebar isOpen={isAiOpen} />
         </div>
       </EditorWorkspace>
