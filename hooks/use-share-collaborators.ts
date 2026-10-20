@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export interface ShareCollaborator {
   id: string;
@@ -16,6 +16,7 @@ export function useShareCollaborators(projectId: string, open: boolean) {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [wasOpen, setWasOpen] = useState(open);
+  const loadGeneration = useRef(0);
 
   if (open !== wasOpen) {
     setWasOpen(open);
@@ -33,6 +34,7 @@ export function useShareCollaborators(projectId: string, open: boolean) {
 
     const controller = new AbortController();
     const { signal } = controller;
+    const generation = ++loadGeneration.current;
 
     async function load() {
       setIsLoading(true);
@@ -40,18 +42,23 @@ export function useShareCollaborators(projectId: string, open: boolean) {
 
       try {
         const response = await fetch(collaboratorsPath(projectId), { signal });
-        if (signal.aborted) {
+        if (isStaleLoad(signal, generation, loadGeneration.current)) {
           return;
         }
 
         if (!response.ok) {
+          const message = await readErrorMessage(response);
+          if (isStaleLoad(signal, generation, loadGeneration.current)) {
+            return;
+          }
+
           setCollaborators([]);
-          setError(await readErrorMessage(response));
+          setError(message);
           return;
         }
 
         const nextCollaborators = await readCollaborators(response);
-        if (signal.aborted) {
+        if (isStaleLoad(signal, generation, loadGeneration.current)) {
           return;
         }
 
@@ -63,13 +70,16 @@ export function useShareCollaborators(projectId: string, open: boolean) {
 
         setCollaborators(nextCollaborators);
       } catch (caught) {
-        if (signal.aborted || isAbortError(caught)) {
+        if (
+          isStaleLoad(signal, generation, loadGeneration.current) ||
+          isAbortError(caught)
+        ) {
           return;
         }
 
         setError("Something went wrong. Try again.");
       } finally {
-        if (!signal.aborted) {
+        if (!isStaleLoad(signal, generation, loadGeneration.current)) {
           setIsLoading(false);
         }
       }
@@ -109,6 +119,8 @@ export function useShareCollaborators(projectId: string, open: boolean) {
         return "error";
       }
 
+      loadGeneration.current += 1;
+      setIsLoading(false);
       setCollaborators((current) =>
         current.some((item) => item.id === invited.collaborator.id)
           ? current
@@ -179,6 +191,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
+}
+
+function isStaleLoad(
+  signal: AbortSignal,
+  generation: number,
+  currentGeneration: number,
+): boolean {
+  return signal.aborted || generation !== currentGeneration;
 }
 
 async function readCollaborators(

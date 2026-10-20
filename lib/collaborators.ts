@@ -235,6 +235,10 @@ async function collectProfiles(
     for (const user of response.data) {
       const profile = profileFromUser(user);
       for (const address of user.emailAddresses) {
+        if (address.verification?.status !== "verified") {
+          continue;
+        }
+
         const email = normalizeEmail(address.emailAddress);
         if (wanted.has(email)) {
           profiles.set(email, profile);
