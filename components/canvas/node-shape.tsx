@@ -6,13 +6,11 @@ import { cn } from "@/lib/utils";
 import { nodeTextColor, type NodeShape } from "@/types/canvas";
 
 const REST_STROKE = "var(--border-subtle)";
-const SELECTED_STROKE = "var(--accent-primary)";
 const SHAPE_STROKE_WIDTH = 1.5;
 
 interface NodeShapeGraphicProps {
   shape: NodeShape;
   fill: string;
-  selected?: boolean;
   label?: string;
   interactive?: boolean;
 }
@@ -20,18 +18,12 @@ interface NodeShapeGraphicProps {
 export function NodeShapeGraphic({
   shape,
   fill,
-  selected = false,
   label = "",
   interactive = true,
 }: NodeShapeGraphicProps) {
   return (
     <div className="relative h-full w-full" data-shape={shape}>
-      <ShapeBody
-        shape={shape}
-        fill={fill}
-        selected={selected}
-        interactive={interactive}
-      />
+      <ShapeBody shape={shape} fill={fill} interactive={interactive} />
       <div
         className="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm"
         style={{ color: nodeTextColor(fill) }}
@@ -45,36 +37,24 @@ export function NodeShapeGraphic({
 function ShapeBody({
   shape,
   fill,
-  selected,
   interactive,
 }: {
   shape: NodeShape;
   fill: string;
-  selected: boolean;
   interactive: boolean;
 }) {
   switch (shape) {
     case "rectangle":
-      return (
-        <CssShape fill={fill} selected={selected} radiusClass="rounded-xl" />
-      );
+      return <CssShape fill={fill} radiusClass="rounded-xl" />;
     case "pill":
     case "circle":
-      return (
-        <CssShape fill={fill} selected={selected} radiusClass="rounded-full" />
-      );
+      return <CssShape fill={fill} radiusClass="rounded-full" />;
     case "diamond":
-      return (
-        <DiamondShape fill={fill} selected={selected} interactive={interactive} />
-      );
+      return <DiamondShape fill={fill} interactive={interactive} />;
     case "hexagon":
-      return (
-        <HexagonShape fill={fill} selected={selected} interactive={interactive} />
-      );
+      return <HexagonShape fill={fill} interactive={interactive} />;
     case "cylinder":
-      return (
-        <CylinderShape fill={fill} selected={selected} interactive={interactive} />
-      );
+      return <CylinderShape fill={fill} interactive={interactive} />;
     default: {
       const unexpected: never = shape;
       throw new Error(`Unexpected shape: ${String(unexpected)}`);
@@ -84,19 +64,16 @@ function ShapeBody({
 
 function CssShape({
   fill,
-  selected,
   radiusClass,
 }: {
   fill: string;
-  selected: boolean;
   radiusClass: string;
 }) {
   return (
     <div
       className={cn(
-        "box-border h-full w-full border",
+        "box-border h-full w-full border border-border-subtle",
         radiusClass,
-        selected ? "border-brand" : "border-border-subtle",
       )}
       style={{ backgroundColor: fill }}
     />
@@ -105,37 +82,30 @@ function CssShape({
 
 function DiamondShape({
   fill,
-  selected,
   interactive,
 }: {
   fill: string;
-  selected: boolean;
   interactive: boolean;
 }) {
   return (
     <ShapeSvg interactive={interactive}>
-      <polygon
-        points="50,4 96,50 50,96 4,50"
-        {...paintedShape(fill, selected)}
-      />
+      <polygon points="50,4 96,50 50,96 4,50" {...paintedShape(fill)} />
     </ShapeSvg>
   );
 }
 
 function HexagonShape({
   fill,
-  selected,
   interactive,
 }: {
   fill: string;
-  selected: boolean;
   interactive: boolean;
 }) {
   return (
     <ShapeSvg interactive={interactive}>
       <polygon
         points="4,50 27,6 73,6 96,50 73,94 27,94"
-        {...paintedShape(fill, selected)}
+        {...paintedShape(fill)}
       />
     </ShapeSvg>
   );
@@ -143,14 +113,12 @@ function HexagonShape({
 
 function CylinderShape({
   fill,
-  selected,
   interactive,
 }: {
   fill: string;
-  selected: boolean;
   interactive: boolean;
 }) {
-  const stroke = shapeStroke(selected);
+  const stroke = REST_STROKE;
 
   return (
     <ShapeSvg interactive={interactive}>
@@ -192,10 +160,10 @@ function ShapeSvg({
   );
 }
 
-function paintedShape(fill: string, selected: boolean) {
+function paintedShape(fill: string) {
   return {
     fill,
-    stroke: shapeStroke(selected),
+    stroke: REST_STROKE,
     strokeWidth: SHAPE_STROKE_WIDTH,
     strokeLinejoin: "round" as const,
     vectorEffect: "non-scaling-stroke" as const,
@@ -209,8 +177,4 @@ function openStroke(stroke: string) {
     strokeWidth: SHAPE_STROKE_WIDTH,
     vectorEffect: "non-scaling-stroke" as const,
   };
-}
-
-function shapeStroke(selected: boolean): string {
-  return selected ? SELECTED_STROKE : REST_STROKE;
 }
