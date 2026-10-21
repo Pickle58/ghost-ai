@@ -68,7 +68,7 @@ Default node color: `#1F1F1F` with `#EDEDED` text.
 
 ### Edge Style
 
-Smooth-step path with an arrow marker. Default edge color: `#f8fafc`. Stroke width is thin — edges are visually secondary to nodes.
+Bezier path with no arrow marker. The curve bows between the two handles. Default edge color is the primary text color. Stroke width is 1px — edges are visually secondary to nodes.
 
 ### Node Shapes
 
@@ -83,7 +83,7 @@ Smooth-step path with an arrow marker. Default edge color: `#f8fafc`. Stroke wid
 
 ### Connection Handles
 
-Small white circular handles, hidden by default, revealed on node hover. Appear at all four sides of a node.
+A selected node draws a thin light-gray rectangle on its bounds. The shape keeps its resting border; selection is that outer rectangle plus the handles. Small light circular handles sit on the rectangle: one at each corner and one at the middle of each side. Corner handles resize the node. Side handles start a connection and stay hidden until the node is hovered, selected, or a connection is in progress.
 
 ### Canvas Background
 

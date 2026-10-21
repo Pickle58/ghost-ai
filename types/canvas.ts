@@ -42,6 +42,11 @@ export const DEFAULT_NODE_SIZES: Record<
   hexagon: { width: 140, height: 124 },
 };
 
+export const MIN_NODE_SIZE = {
+  width: 64,
+  height: 48,
+} as const;
+
 export function nodeTextColor(fill: string): string {
   for (const color of NODE_COLORS) {
     if (color.fill === fill) {
