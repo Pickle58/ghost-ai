@@ -36,6 +36,8 @@ Update this file whenever the current phase, active feature, or implementation s
 - AI sidebar shell (Feature 20): the right-side floating AI panel is separated into `components/editor/ai-sidebar.tsx`, keeps the parent-controlled open/close state, preserves the existing slide-in placement, and includes the `AI Workspace` header, `AI Architect` and `Specs` tabs, starter prompt chips, chat composer, and static demo spec card using the project’s dark theme tokens.
 - Canvas autosave and restore: `@vercel/blob` stores the JSON payload and the blob URL is persisted to the Prisma project record via `/api/projects/[projectId]/canvas`; the editor loads saved canvas state only when the Liveblocks room is empty, and the save status indicator reflects saving, saved, and error states through a debounced `useCanvasAutosave` hook.
 - Autosave status wiring: fixed the editor-level callback flow to avoid render-time state updates while the canvas status and manual-save callback propagate to the room toolbar.
+- Verified the initial canvas load guard: the loader only marks the initial canvas as loaded after a successful restore or an empty snapshot and will retry failed fetches without enabling autosave until the restore succeeds.
+- Hardened the AI design run token flow: the token now carries an expiry and HMAC signature, and verification rejects unsigned, expired, or tampered payloads before acceptance.
 
 ## In Progress
 

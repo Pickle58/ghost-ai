@@ -142,6 +142,11 @@ function FlowCanvasSurface({
   const { screenToFlowPosition, zoomIn, zoomOut, fitView } = reactFlow;
   const updateMyPresence = useUpdateMyPresence();
   const [hasLoadedInitialCanvas, setHasLoadedInitialCanvas] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const retryLoad = useCallback(() => {
+    setHasLoadedInitialCanvas(false);
+    setLoadAttempt((count) => count + 1);
+  }, []);
   const selectedNodes = useNodes<CanvasNode>().filter((node) => node.selected);
   const selectedEdges = useEdges<CanvasEdge>().filter((edge) => edge.selected);
 
@@ -176,7 +181,9 @@ function FlowCanvasSurface({
 
     async function loadSavedCanvas() {
       if (nodes.length > 0 || edges.length > 0) {
-        setHasLoadedInitialCanvas(true);
+        if (!isCancelled) {
+          setHasLoadedInitialCanvas(true);
+        }
         return;
       }
 
@@ -187,8 +194,7 @@ function FlowCanvasSurface({
         );
 
         if (!response.ok) {
-          setHasLoadedInitialCanvas(true);
-          return;
+          throw new Error(`Canvas load failed with status ${response.status}`);
         }
 
         const payload: unknown = await response.json();
@@ -200,7 +206,9 @@ function FlowCanvasSurface({
             : null;
 
         if (!canvas || (canvas.nodes.length === 0 && canvas.edges.length === 0)) {
-          setHasLoadedInitialCanvas(true);
+          if (!isCancelled) {
+            setHasLoadedInitialCanvas(true);
+          }
           return;
         }
 
@@ -220,9 +228,15 @@ function FlowCanvasSurface({
             item,
           })),
         );
-      } finally {
+
         if (!isCancelled) {
           setHasLoadedInitialCanvas(true);
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          console.error("Canvas load failed", error);
+          onSaveStatusChange?.("error");
+          retryLoad();
         }
       }
     }
@@ -231,7 +245,16 @@ function FlowCanvasSurface({
     return () => {
       isCancelled = true;
     };
-  }, [edges.length, hasLoadedInitialCanvas, nodes.length, onEdgesChange, onNodesChange, projectId]);
+  }, [
+    edges.length,
+    hasLoadedInitialCanvas,
+    loadAttempt,
+    nodes.length,
+    onEdgesChange,
+    onNodesChange,
+    onSaveStatusChange,
+    projectId,
+  ]);
 
   const undo = useUndo();
   const redo = useRedo();
