@@ -12,6 +12,8 @@ import { FlowCanvas } from "@/components/canvas/flow-canvas";
 
 interface CanvasRoomProps {
   roomId: string;
+  isTemplatesOpen?: boolean;
+  onOpenTemplatesChange?: (open: boolean) => void;
 }
 
 const initialPresence = {
@@ -19,7 +21,11 @@ const initialPresence = {
   isThinking: false,
 };
 
-export function CanvasRoom({ roomId }: CanvasRoomProps) {
+export function CanvasRoom({
+  roomId,
+  isTemplatesOpen,
+  onOpenTemplatesChange,
+}: CanvasRoomProps) {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
       <RoomProvider id={roomId} initialPresence={initialPresence}>
@@ -33,7 +39,10 @@ export function CanvasRoom({ roomId }: CanvasRoomProps) {
               <ClientSideSuspense
                 fallback={<CanvasMessage>Loading canvas…</CanvasMessage>}
               >
-                <FlowCanvas />
+                <FlowCanvas
+                  isTemplatesOpen={isTemplatesOpen}
+                  onOpenTemplatesChange={onOpenTemplatesChange}
+                />
               </ClientSideSuspense>
             </CanvasErrorBoundary>
           </CanvasConnectionFallback>

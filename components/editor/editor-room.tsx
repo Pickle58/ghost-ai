@@ -1,6 +1,11 @@
 "use client";
 
-import { PanelRightClose, PanelRightOpen, Share2 } from "lucide-react";
+import {
+  LayoutTemplate,
+  PanelRightClose,
+  PanelRightOpen,
+  Share2,
+} from "lucide-react";
 import { useState } from "react";
 import { cn } from "cn";
 
@@ -25,6 +30,7 @@ export function EditorRoom({
 }: EditorRoomProps) {
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
 
   return (
     <>
@@ -39,6 +45,8 @@ export function EditorRoom({
         }
         actions={
           <RoomActions
+            isTemplatesOpen={isTemplatesOpen}
+            onOpenTemplates={() => setIsTemplatesOpen(true)}
             isShareOpen={isShareOpen}
             onShare={() => setIsShareOpen(true)}
             isAiOpen={isAiOpen}
@@ -47,7 +55,11 @@ export function EditorRoom({
         }
       >
         <div className="relative h-full bg-base">
-          <CanvasRoom roomId={project.id} />
+          <CanvasRoom
+            roomId={project.id}
+            isTemplatesOpen={isTemplatesOpen}
+            onOpenTemplatesChange={setIsTemplatesOpen}
+          />
           <AiSidebar isOpen={isAiOpen} />
         </div>
       </EditorWorkspace>
@@ -62,6 +74,8 @@ export function EditorRoom({
 }
 
 interface RoomActionsProps {
+  isTemplatesOpen: boolean;
+  onOpenTemplates: () => void;
   isShareOpen: boolean;
   onShare: () => void;
   isAiOpen: boolean;
@@ -69,6 +83,8 @@ interface RoomActionsProps {
 }
 
 function RoomActions({
+  isTemplatesOpen,
+  onOpenTemplates,
   isShareOpen,
   onShare,
   isAiOpen,
@@ -78,6 +94,17 @@ function RoomActions({
 
   return (
     <>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label="Starter templates"
+        aria-haspopup="dialog"
+        aria-expanded={isTemplatesOpen}
+        onClick={onOpenTemplates}
+      >
+        <LayoutTemplate className="size-5" />
+      </Button>
       <Button
         type="button"
         variant="ghost"

@@ -31,6 +31,8 @@ import {
 } from "@/components/canvas/canvas-edge";
 import { CanvasNodeView } from "@/components/canvas/canvas-node";
 import { ShapePanel } from "@/components/canvas/shape-panel";
+import type { CanvasTemplate } from "@/components/editor/starter-templates";
+import { StarterTemplatesModal } from "@/components/editor/starter-templates-modal";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import {
   createDroppedCanvasNode,
@@ -63,15 +65,34 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
   },
 };
 
-export function FlowCanvas() {
+interface FlowCanvasProps {
+  isTemplatesOpen?: boolean;
+  onOpenTemplatesChange?: (open: boolean) => void;
+}
+
+export function FlowCanvas({
+  isTemplatesOpen,
+  onOpenTemplatesChange,
+}: FlowCanvasProps) {
   return (
     <ReactFlowProvider>
-      <FlowCanvasSurface />
+      <FlowCanvasSurface
+        isTemplatesOpen={isTemplatesOpen}
+        onOpenTemplatesChange={onOpenTemplatesChange}
+      />
     </ReactFlowProvider>
   );
 }
 
-function FlowCanvasSurface() {
+interface FlowCanvasSurfaceProps {
+  isTemplatesOpen?: boolean;
+  onOpenTemplatesChange?: (open: boolean) => void;
+}
+
+function FlowCanvasSurface({
+  isTemplatesOpen,
+  onOpenTemplatesChange,
+}: FlowCanvasSurfaceProps) {
   const reactFlow = useReactFlow();
   const { screenToFlowPosition, zoomIn, zoomOut, fitView } = reactFlow;
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
@@ -103,6 +124,56 @@ function FlowCanvasSurface() {
   const handleFitView = useCallback(() => {
     fitView({ duration: 200 });
   }, [fitView]);
+
+  const handleImportTemplate = useCallback(
+    (template: CanvasTemplate) => {
+      // 1. Clear all existing nodes and edges first in the canvas
+      if (nodes.length > 0 || edges.length > 0) {
+        onDelete({ nodes, edges });
+      }
+
+      // 2. Clone template data so canvas modifications don't mutate CANVAS_TEMPLATES
+      const clonedNodes: CanvasNode[] = template.nodes.map((node) => ({
+        ...node,
+        position: { ...node.position },
+        data: { ...node.data },
+      }));
+      const clonedEdges: CanvasEdge[] = template.edges.map((edge) => ({
+        ...edge,
+        data: {
+          ...edge.data,
+          label: edge.data?.label ?? "",
+        },
+      }));
+
+      // 3. Add the selected template nodes and edges after the canvas is cleared
+      if (clonedNodes.length > 0) {
+        onNodesChange(
+          clonedNodes.map((item) => ({
+            type: "add" as const,
+            item,
+          })),
+        );
+      }
+
+      if (clonedEdges.length > 0) {
+        onEdgesChange(
+          clonedEdges.map((item) => ({
+            type: "add" as const,
+            item,
+          })),
+        );
+      }
+
+      // 4. Fit the view after the template is loaded
+      window.requestAnimationFrame(() => {
+        setTimeout(() => {
+          fitView({ duration: 200 });
+        }, 50);
+      });
+    },
+    [nodes, edges, onDelete, onNodesChange, onEdgesChange, fitView],
+  );
 
   function handleDragOver(event: DragEvent<HTMLDivElement>) {
     if (!event.dataTransfer.types.includes(SHAPE_DRAG_MIME)) {
@@ -188,6 +259,11 @@ function FlowCanvasSurface() {
         onRedo={redo}
         canUndo={canUndo}
         canRedo={canRedo}
+      />
+      <StarterTemplatesModal
+        open={Boolean(isTemplatesOpen)}
+        onOpenChange={(open) => onOpenTemplatesChange?.(open)}
+        onImport={handleImportTemplate}
       />
     </div>
   );
