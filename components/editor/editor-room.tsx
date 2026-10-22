@@ -7,8 +7,8 @@ import {
   Share2,
 } from "lucide-react";
 import { useState } from "react";
-import { cn } from "cn";
 
+import { AiSidebar } from "@/components/editor/ai-sidebar";
 import { CanvasRoom } from "@/components/canvas/canvas-room";
 import { EditorWorkspace } from "@/components/editor/editor-workspace";
 import type { ProjectSummary } from "@/components/editor/project-summary";
@@ -62,7 +62,7 @@ export function EditorRoom({
             onOpenTemplatesChange={setIsTemplatesOpen}
             isAiOpen={isAiOpen}
           />
-          <AiSidebar isOpen={isAiOpen} />
+          <AiSidebar isOpen={isAiOpen} onClose={() => setIsAiOpen(false)} />
         </div>
       </EditorWorkspace>
       <ShareDialog
@@ -137,32 +137,3 @@ function RoomActions({
   );
 }
 
-interface AiSidebarProps {
-  isOpen: boolean;
-}
-
-function AiSidebar({ isOpen }: AiSidebarProps) {
-  return (
-    <aside
-      id="ai-sidebar"
-      aria-label="AI"
-      aria-hidden={!isOpen}
-      inert={!isOpen}
-      className={cn(
-        "absolute inset-y-3 right-3 z-30 flex w-80 max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-2xl border border-border-subtle bg-surface/90 shadow-xl backdrop-blur-md transition-transform duration-200 ease-out",
-        isOpen
-          ? "translate-x-0"
-          : "pointer-events-none translate-x-[calc(100%+1.5rem)]",
-      )}
-    >
-      <div className="border-b border-border-subtle px-4 py-3">
-        <h2 className="text-sm font-medium text-copy-primary">AI</h2>
-      </div>
-      <div className="flex flex-1 items-center justify-center px-6">
-        <p className="text-center text-sm text-copy-muted">
-          AI chat will appear here.
-        </p>
-      </div>
-    </aside>
-  );
-}

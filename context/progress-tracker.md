@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Presence avatars and live multiplayer cursors (Feature 19).
+- AI sidebar shell (Feature 20).
 
 ## Completed
 
@@ -31,6 +31,7 @@ Update this file whenever the current phase, active feature, or implementation s
 - Custom canvas edges: new connections store `canvasEdge` with a closed arrow, a 1px rounded light stroke, and `data.label`. The custom renderer uses `getSmoothStepPath` for right-angle routing. Edges stay dimmed at rest and brighten when hovered or selected. A 32px invisible hit area makes them easier to click. Double-clicking an edge edits its label in `EdgeLabelRenderer` at the path midpoint. Saved labels render as pill badges. An unlabeled selected edge shows a faint "Label" hint. Blur, Enter, and Escape save through `updateEdgeData`. Label pointer events use `nodrag`, `nopan`, and `nowheel`. The in-progress connection line uses SmoothStep and the same stroke.
 - Canvas ergonomics: a pill-shaped control bar at the bottom-left of the canvas (`bottom-6 left-6`) provides smooth animated zoom in, zoom out, and fit view controls (200ms duration) alongside Liveblocks history undo and redo buttons. Undo and redo disable and dim automatically when history is empty. `useKeyboardShortcuts` listens on `window` for `+`/`=` (zoom in), `-` (zoom out), `Cmd/Ctrl + Z` (undo), `Cmd/Ctrl + Shift + Z` / `Cmd/Ctrl + Y` (redo), while ignoring inputs, textareas, and editable fields.
 - Starter system design templates (Feature 18): `components/editor/starter-templates.ts` defines `CanvasTemplate` and `CANVAS_TEMPLATES` with microservices, event-driven, and CI/CD pipeline architectures using shared canvas types and the standard node color palette. `StarterTemplatesModal` in `components/editor/starter-templates-modal.tsx` opens a dialog with a scrollable card grid and lightweight SVG diagram previews fitting each template's bounding box without React Flow. The navbar includes a `LayoutTemplate` action button that opens the modal. Importing a template clears all existing nodes and edges via `onDelete({ nodes, edges })`, adds the cloned template nodes and edges via `onNodesChange` and `onEdgesChange`, and animates `fitView({ duration: 200 })`.
+- AI sidebar shell (Feature 20): the right-side floating AI panel is separated into `components/editor/ai-sidebar.tsx`, keeps the parent-controlled open/close state, preserves the existing slide-in placement, and includes the `AI Workspace` header, `AI Architect` and `Specs` tabs, starter prompt chips, chat composer, and static demo spec card using the project’s dark theme tokens.
 
 ## In Progress
 
