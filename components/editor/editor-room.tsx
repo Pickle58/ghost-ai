@@ -38,6 +38,7 @@ export function EditorRoom({
         ownedProjects={ownedProjects}
         sharedProjects={sharedProjects}
         activeProjectId={project.id}
+        showAuth={false}
         center={
           <h1 className="min-w-0 max-w-full truncate px-3 text-sm font-medium text-copy-primary">
             {project.name}
@@ -59,6 +60,7 @@ export function EditorRoom({
             roomId={project.id}
             isTemplatesOpen={isTemplatesOpen}
             onOpenTemplatesChange={setIsTemplatesOpen}
+            isAiOpen={isAiOpen}
           />
           <AiSidebar isOpen={isAiOpen} />
         </div>

@@ -12,6 +12,7 @@ interface EditorNavbarProps {
   sidebarToggleRef: RefObject<HTMLButtonElement | null>;
   center?: ReactNode;
   actions?: ReactNode;
+  showAuth?: boolean;
 }
 
 export function EditorNavbar({
@@ -20,6 +21,7 @@ export function EditorNavbar({
   sidebarToggleRef,
   center,
   actions,
+  showAuth = true,
 }: EditorNavbarProps) {
   const sidebarLabel = isSidebarOpen ? "Close sidebar" : "Open sidebar";
 
@@ -48,7 +50,7 @@ export function EditorNavbar({
       </div>
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
         {actions}
-        <AuthControls />
+        {showAuth ? <AuthControls /> : null}
       </div>
     </header>
   );
