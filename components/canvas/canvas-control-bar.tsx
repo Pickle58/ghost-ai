@@ -34,7 +34,7 @@ export function CanvasControlBar({
 
   return (
     <div
-      className="nodrag nopan nowheel absolute bottom-6 left-6 z-10 flex items-center gap-1 rounded-full border border-surface-border bg-elevated px-2 py-2"
+      className="nodrag nopan nowheel absolute bottom-6 left-6 z-20 flex items-center gap-1 rounded-full border border-surface-border bg-elevated px-2 py-2"
       onDragOver={keepDropOffBar}
       onDrop={keepDropOffBar}
     >

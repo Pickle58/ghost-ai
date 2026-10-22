@@ -31,7 +31,7 @@ import {
 } from "@/components/canvas/canvas-edge";
 import { CanvasNodeView } from "@/components/canvas/canvas-node";
 import { ShapePanel } from "@/components/canvas/shape-panel";
-import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import {
   createDroppedCanvasNode,
   parseShapeDragPayload,
@@ -179,6 +179,7 @@ function FlowCanvasSurface() {
           maskStrokeColor="var(--accent-primary)"
         />
       </ReactFlow>
+      <ShapePanel />
       <CanvasControlBar
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
@@ -188,7 +189,6 @@ function FlowCanvasSurface() {
         canUndo={canUndo}
         canRedo={canRedo}
       />
-      <ShapePanel />
     </div>
   );
 }
