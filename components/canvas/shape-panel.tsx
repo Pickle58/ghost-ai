@@ -38,7 +38,9 @@ export function ShapePanel() {
   const dragShapeRef = useRef<NodeShape | null>(null);
   const [preview, setPreview] = useState<ShapeDragGhostState | null>(null);
 
-  getViewportRef.current = getViewport;
+  useEffect(() => {
+    getViewportRef.current = getViewport;
+  }, [getViewport]);
 
   useEffect(() => {
     function onDragOver(event: globalThis.DragEvent) {

@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- A signed-in owner or collaborator can connect nodes with custom right-angle edges that are easy to follow and click. New edges use the canvas edge renderer with a light rounded stroke and an arrowhead. Hovering a node fades in four connection handles. Double-clicking an edge edits an inline label through the existing Liveblocks edge data.
+- A signed-in user or collaborator can navigate and edit the canvas ergonomically using a bottom-left control bar (smooth zoom in, zoom out, fit view, and Liveblocks undo/redo with disabled states) and corresponding keyboard shortcuts (+/=, -, Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z, Cmd/Ctrl+Y) that bypass editable text fields.
 
 ## Completed
 
@@ -29,6 +29,7 @@ Update this file whenever the current phase, active feature, or implementation s
 - Shape connections: each shape has one connection point at the middle of each side, on the border. The point is a small white dot with a dark border. It stays hidden until the node is hovered, then fades in. Users can connect from any handle to any other handle. New edges use the `canvasEdge` renderer.
 - Node color toolbar: a selected node shows a floating swatch bar slightly above it. Each swatch is one `NODE_COLORS` pair. Choosing a swatch writes the fill through `updateNodeData`, and the paired text color updates in the node UI. Toolbar pointer events use `nodrag`, `nopan`, and `nowheel`. Unselected nodes hide the toolbar.
 - Custom canvas edges: new connections store `canvasEdge` with a closed arrow, a 1px rounded light stroke, and `data.label`. The custom renderer uses `getSmoothStepPath` for right-angle routing. Edges stay dimmed at rest and brighten when hovered or selected. A 32px invisible hit area makes them easier to click. Double-clicking an edge edits its label in `EdgeLabelRenderer` at the path midpoint. Saved labels render as pill badges. An unlabeled selected edge shows a faint "Label" hint. Blur, Enter, and Escape save through `updateEdgeData`. Label pointer events use `nodrag`, `nopan`, and `nowheel`. The in-progress connection line uses SmoothStep and the same stroke.
+- Canvas ergonomics: a pill-shaped control bar at the bottom-left of the canvas (`bottom-6 left-6`) provides smooth animated zoom in, zoom out, and fit view controls (200ms duration) alongside Liveblocks history undo and redo buttons. Undo and redo disable and dim automatically when history is empty. `useKeyboardShortcuts` listens on `window` for `+`/`=` (zoom in), `-` (zoom out), `Cmd/Ctrl + Z` (undo), `Cmd/Ctrl + Shift + Z` / `Cmd/Ctrl + Y` (redo), while ignoring inputs, textareas, and editable fields.
 
 ## In Progress
 
@@ -36,7 +37,8 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Canvas ergonomics: bottom-left zoom and undo/redo control bar, wired to React Flow and Liveblocks history, plus `useKeyboardShortcuts`.
+- Starter system design templates (Feature 18): template library and canvas import.
+- Presence avatars and live multiplayer cursors (Feature 19).
 - Decide sign-up and sign-in identifiers and social providers.
 - Protect individual pages and Server Actions with `await auth.protect()` when those routes need a signed-in user. Project API routes return 401 from `auth()` instead, because `auth.protect()` redirects.
 
@@ -61,6 +63,7 @@ Update this file whenever the current phase, active feature, or implementation s
 - Node resize uses a React Flow resize control on each corner of the selected node. Side handles are connection points and stay hidden until hover, so a selected node shows corner resize dots until the pointer is over it. Dimension changes already flow through `onNodesChange` into Liveblocks width and height. The minimum size is 64×48 in `MIN_NODE_SIZE`, which is below every default shape size. The resize handles are 6px light circles. Label edits call `updateNodeData`, which emits a replace change on that same handler. The label stays in a centered overlay. While editing, the textarea occupies that overlay, and pointer events inside it do not drag or pan. Shape graphics, the shape panel, the drag ghost, and drop creation are unchanged.
 - Each shape has four source handles, one at the middle of each side, sitting on the border. They are 6px white dots with a `--bg-base` border, hidden until the node is hovered, then faded in. Corner handles still resize. `ConnectionMode.Loose` lets any handle connect to any other handle. New connections merge `defaultEdgeOptions` into Liveblocks `onConnect`, so stored edges are `canvasEdge` with a closed arrow, rounded 1px stroke, and `data.label`. The custom renderer draws a smooth-step path from `getSmoothStepPath`, dims the stroke to `--text-muted` at rest, and brightens to `--text-primary` when hovered, selected, or being labeled. `BaseEdge` uses a 32px interaction width. Labels sit in `EdgeLabelRenderer` at the path midpoint coordinates. `updateEdgeData` writes `data.label` through the same Liveblocks edge changes as node data. The in-progress line is SmoothStep with that same stroke.
 - Node color uses the eight `NODE_COLORS` pairs in `types/canvas.ts`. The collaborative field is still `data.color` (the fill). Text comes from `nodeTextColor`. A selected node mounts `NodeToolbar` 12px above the node, with one swatch per pair. The active swatch uses a 1.5px ring in that pair's text color. Hover glow is a 4px shadow in the same text color. Toolbar chrome uses elevated surface tokens. Shape creation, resize, labels, and connections are unchanged.
+- Canvas ergonomics uses a floating pill control bar at `bottom-6 left-6` with elevated tokens (`bg-elevated`, `border-surface-border`), using `nodrag nopan nowheel` so clicking or dragging inside the bar does not pan the canvas or trigger drop events. Zoom in, zoom out, and fit view use smooth 200ms transitions. Undo and redo use Liveblocks history hooks (`useUndo`, `useRedo`, `useCanUndo`, `useCanRedo` from `@liveblocks/react/suspense`). Keyboard shortcuts are managed via `hooks/use-keyboard-shortcuts.ts` (re-exported by `hooks/useKeyboardShortcuts.ts`), safely ignoring events originating from input, textarea, select, or contentEditable elements.
 
 ## Session Notes
 

@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  useCanRedo,
+  useCanUndo,
+  useRedo,
+  useUndo,
+} from "@liveblocks/react/suspense";
 import { useLiveblocksFlow } from "@liveblocks/react-flow";
 import {
   Background,
@@ -16,14 +22,16 @@ import {
   type NodeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import type { DragEvent } from "react";
+import { useCallback, type DragEvent } from "react";
 
+import { CanvasControlBar } from "@/components/canvas/canvas-control-bar";
 import {
   CanvasEdgeView,
   canvasEdgeStyle,
 } from "@/components/canvas/canvas-edge";
 import { CanvasNodeView } from "@/components/canvas/canvas-node";
 import { ShapePanel } from "@/components/canvas/shape-panel";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import {
   createDroppedCanvasNode,
   parseShapeDragPayload,
@@ -64,13 +72,37 @@ export function FlowCanvas() {
 }
 
 function FlowCanvasSurface() {
-  const { screenToFlowPosition } = useReactFlow();
+  const reactFlow = useReactFlow();
+  const { screenToFlowPosition, zoomIn, zoomOut, fitView } = reactFlow;
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<CanvasNode, CanvasEdge>({
       suspense: true,
       nodes: { initial: initialNodes },
       edges: { initial: initialEdges },
     });
+
+  const undo = useUndo();
+  const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
+
+  useKeyboardShortcuts({
+    reactFlow,
+    undo,
+    redo,
+  });
+
+  const handleZoomIn = useCallback(() => {
+    zoomIn({ duration: 200 });
+  }, [zoomIn]);
+
+  const handleZoomOut = useCallback(() => {
+    zoomOut({ duration: 200 });
+  }, [zoomOut]);
+
+  const handleFitView = useCallback(() => {
+    fitView({ duration: 200 });
+  }, [fitView]);
 
   function handleDragOver(event: DragEvent<HTMLDivElement>) {
     if (!event.dataTransfer.types.includes(SHAPE_DRAG_MIME)) {
@@ -147,6 +179,15 @@ function FlowCanvasSurface() {
           maskStrokeColor="var(--accent-primary)"
         />
       </ReactFlow>
+      <CanvasControlBar
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onFitView={handleFitView}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+      />
       <ShapePanel />
     </div>
   );

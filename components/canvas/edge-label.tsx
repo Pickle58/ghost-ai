@@ -32,14 +32,20 @@ export function EdgeLabel({
   onChange,
 }: EdgeLabelProps) {
   const [draft, setDraft] = useState(label);
+  const [prevEditing, setPrevEditing] = useState(editing);
   const fieldRef = useRef<HTMLInputElement>(null);
+
+  if (editing !== prevEditing) {
+    setPrevEditing(editing);
+    if (editing) {
+      setDraft(label);
+    }
+  }
 
   useLayoutEffect(() => {
     if (!editing) {
       return;
     }
-
-    setDraft(label);
 
     const field = fieldRef.current;
 
@@ -50,7 +56,7 @@ export function EdgeLabel({
     field.focus();
     const end = field.value.length;
     field.setSelectionRange(end, end);
-  }, [editing, label]);
+  }, [editing]);
 
   const showHint = active && !label && !editing;
   const showBadge = Boolean(label) && !editing;
