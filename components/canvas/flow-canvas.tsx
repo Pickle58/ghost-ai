@@ -5,6 +5,7 @@ import {
   useCanUndo,
   useRedo,
   useUndo,
+  useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
 import { useLiveblocksFlow } from "@liveblocks/react-flow";
 import {
@@ -22,7 +23,7 @@ import {
   type NodeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useCallback, type DragEvent } from "react";
+import { useCallback, useEffect, type DragEvent, type MouseEvent } from "react";
 
 import { CanvasControlBar } from "@/components/canvas/canvas-control-bar";
 import {
@@ -30,6 +31,8 @@ import {
   canvasEdgeStyle,
 } from "@/components/canvas/canvas-edge";
 import { CanvasNodeView } from "@/components/canvas/canvas-node";
+import { CanvasParticipantAvatars } from "@/components/canvas/canvas-participant-avatars";
+import { LiveCursors } from "@/components/canvas/live-cursors";
 import { ShapePanel } from "@/components/canvas/shape-panel";
 import type { CanvasTemplate } from "@/components/editor/starter-templates";
 import { StarterTemplatesModal } from "@/components/editor/starter-templates-modal";
@@ -68,17 +71,20 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
 interface FlowCanvasProps {
   isTemplatesOpen?: boolean;
   onOpenTemplatesChange?: (open: boolean) => void;
+  isAiOpen?: boolean;
 }
 
 export function FlowCanvas({
   isTemplatesOpen,
   onOpenTemplatesChange,
+  isAiOpen,
 }: FlowCanvasProps) {
   return (
     <ReactFlowProvider>
       <FlowCanvasSurface
         isTemplatesOpen={isTemplatesOpen}
         onOpenTemplatesChange={onOpenTemplatesChange}
+        isAiOpen={isAiOpen}
       />
     </ReactFlowProvider>
   );
@@ -87,14 +93,18 @@ export function FlowCanvas({
 interface FlowCanvasSurfaceProps {
   isTemplatesOpen?: boolean;
   onOpenTemplatesChange?: (open: boolean) => void;
+  isAiOpen?: boolean;
 }
 
 function FlowCanvasSurface({
   isTemplatesOpen,
   onOpenTemplatesChange,
+  isAiOpen,
 }: FlowCanvasSurfaceProps) {
   const reactFlow = useReactFlow();
   const { screenToFlowPosition, zoomIn, zoomOut, fitView } = reactFlow;
+  const updateMyPresence = useUpdateMyPresence();
+
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<CanvasNode, CanvasEdge>({
       suspense: true,
@@ -124,6 +134,31 @@ function FlowCanvasSurface({
   const handleFitView = useCallback(() => {
     fitView({ duration: 200 });
   }, [fitView]);
+
+  const handleMouseMove = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      updateMyPresence({ cursor: position });
+    },
+    [screenToFlowPosition, updateMyPresence],
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    updateMyPresence({ cursor: null });
+  }, [updateMyPresence]);
+
+  useEffect(() => {
+    const handleBlur = () => {
+      updateMyPresence({ cursor: null });
+    };
+    window.addEventListener("blur", handleBlur);
+    return () => {
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, [updateMyPresence]);
 
   const handleImportTemplate = useCallback(
     (template: CanvasTemplate) => {
@@ -234,6 +269,8 @@ function FlowCanvasSurface({
         connectionMode={ConnectionMode.Loose}
         connectionLineType={ConnectionLineType.SmoothStep}
         connectionLineStyle={canvasEdgeStyle}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
         fitView
         colorMode="dark"
       >
@@ -249,7 +286,9 @@ function FlowCanvasSurface({
           nodeStrokeColor="var(--text-muted)"
           maskStrokeColor="var(--accent-primary)"
         />
+        <LiveCursors />
       </ReactFlow>
+      <CanvasParticipantAvatars isAiOpen={isAiOpen} />
       <ShapePanel />
       <CanvasControlBar
         onZoomIn={handleZoomIn}

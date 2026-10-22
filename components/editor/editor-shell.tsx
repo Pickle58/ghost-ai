@@ -13,6 +13,7 @@ interface EditorShellProps {
   activeProjectId?: string;
   ownedProjects: readonly ProjectSummary[];
   sharedProjects: readonly ProjectSummary[];
+  showAuth?: boolean;
   onCreateProject: () => void;
   onRenameProject: (project: ProjectSummary) => void;
   onDeleteProject: (project: ProjectSummary) => void;
@@ -25,6 +26,7 @@ export function EditorShell({
   activeProjectId,
   ownedProjects,
   sharedProjects,
+  showAuth,
   onCreateProject,
   onRenameProject,
   onDeleteProject,
@@ -40,6 +42,7 @@ export function EditorShell({
         sidebarToggleRef={sidebarToggleRef}
         center={center}
         actions={actions}
+        showAuth={showAuth}
       />
       <div className="relative min-h-0 flex-1">
         <div className="absolute inset-0">{children}</div>

@@ -16,6 +16,7 @@ interface EditorWorkspaceProps {
   center?: ReactNode;
   actions?: ReactNode;
   activeProjectId?: string;
+  showAuth?: boolean;
   children?: ReactNode;
 }
 
@@ -25,6 +26,7 @@ export function EditorWorkspace({
   center,
   actions,
   activeProjectId,
+  showAuth,
   children,
 }: EditorWorkspaceProps) {
   const {
@@ -56,6 +58,7 @@ export function EditorWorkspace({
         activeProjectId={activeProjectId}
         ownedProjects={ownedProjects}
         sharedProjects={sharedProjects}
+        showAuth={showAuth}
         onCreateProject={openCreate}
         onRenameProject={openRename}
         onDeleteProject={openDelete}

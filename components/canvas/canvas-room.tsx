@@ -14,17 +14,19 @@ interface CanvasRoomProps {
   roomId: string;
   isTemplatesOpen?: boolean;
   onOpenTemplatesChange?: (open: boolean) => void;
+  isAiOpen?: boolean;
 }
 
 const initialPresence = {
   cursor: null,
-  isThinking: false,
+  thinking: false,
 };
 
 export function CanvasRoom({
   roomId,
   isTemplatesOpen,
   onOpenTemplatesChange,
+  isAiOpen,
 }: CanvasRoomProps) {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
@@ -42,6 +44,7 @@ export function CanvasRoom({
                 <FlowCanvas
                   isTemplatesOpen={isTemplatesOpen}
                   onOpenTemplatesChange={onOpenTemplatesChange}
+                  isAiOpen={isAiOpen}
                 />
               </ClientSideSuspense>
             </CanvasErrorBoundary>
