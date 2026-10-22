@@ -138,7 +138,7 @@ export function NodeLabel({ label, color, onChange }: NodeLabelProps) {
           rows={1}
           value={draft}
           placeholder={LABEL_PLACEHOLDER}
-          className="nodrag nopan nowheel m-0 max-h-full w-full resize-none appearance-none overflow-hidden border-0 bg-transparent p-0 text-center font-[inherit] text-sm leading-5 text-inherit outline-none placeholder:text-current placeholder:opacity-45"
+          className="nodrag nopan nowheel m-0 max-h-full w-full resize-none appearance-none overflow-x-hidden overflow-y-auto border-0 bg-transparent p-0 text-center font-[inherit] text-sm leading-5 text-inherit outline-none placeholder:text-current placeholder:opacity-45"
           style={{ userSelect: "text" }}
           onChange={(event) => changeDraft(event.target.value)}
           onBlur={closeEditing}
