@@ -40,6 +40,7 @@ export function AiSidebar({ isOpen, onClose }: AiSidebarProps) {
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!textareaRef.current) {
@@ -49,6 +50,23 @@ export function AiSidebar({ isOpen, onClose }: AiSidebarProps) {
     textareaRef.current.style.height = "auto";
     textareaRef.current.style.height = `${Math.min(160, textareaRef.current.scrollHeight)}px`;
   }, [draft]);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+
+    if (!container || messages.length === 0) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [messages]);
 
   const handleSubmit = () => {
     const trimmed = draft.trim();
@@ -136,7 +154,10 @@ export function AiSidebar({ isOpen, onClose }: AiSidebarProps) {
 
         <TabsContent value="architect" className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-3">
+            <div
+              ref={messagesContainerRef}
+              className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-3"
+            >
               {messages.length === 0 ? (
                 <div className="flex flex-1 flex-col items-center justify-center gap-5 px-4 py-6 text-center">
                   <div className="flex size-12 items-center justify-center rounded-2xl border border-border-subtle bg-elevated text-brand">
@@ -200,10 +221,12 @@ export function AiSidebar({ isOpen, onClose }: AiSidebarProps) {
                   className="min-h-[72px] max-h-[160px] resize-none border-0 bg-transparent px-0 py-1 text-sm text-copy-primary shadow-none placeholder:text-copy-muted focus-visible:ring-0"
                   onChange={(event) => setDraft(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter" && !event.shiftKey) {
-                      event.preventDefault();
-                      handleSubmit();
+                    if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) {
+                      return;
                     }
+
+                    event.preventDefault();
+                    handleSubmit();
                   }}
                 />
                 <Button

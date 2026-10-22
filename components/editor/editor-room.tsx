@@ -6,14 +6,15 @@ import {
   PanelRightOpen,
   Share2,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
-import { AiSidebar } from "@/components/editor/ai-sidebar";
 import { CanvasRoom } from "@/components/canvas/canvas-room";
+import { AiSidebar } from "@/components/editor/ai-sidebar";
 import { EditorWorkspace } from "@/components/editor/editor-workspace";
 import type { ProjectSummary } from "@/components/editor/project-summary";
 import { ShareDialog } from "@/components/editor/share-dialog";
 import { Button } from "@/components/ui/button";
+import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave";
 
 interface EditorRoomProps {
   project: ProjectSummary;
@@ -31,6 +32,26 @@ export function EditorRoom({
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<CanvasSaveStatus>("saved");
+  const saveNowRef = useRef<(() => Promise<void>) | null>(null);
+
+  const handleSaveStatusChange = useCallback(
+    (status: CanvasSaveStatus) => {
+      setSaveStatus(status);
+    },
+    [],
+  );
+
+  const handleSaveReady = useCallback((saveNow: () => Promise<void>) => {
+    saveNowRef.current = saveNow;
+  }, []);
+
+  const handleSaveNow = useCallback(() => {
+    const saveNow = saveNowRef.current;
+    if (saveNow) {
+      void saveNow();
+    }
+  }, []);
 
   return (
     <>
@@ -46,6 +67,8 @@ export function EditorRoom({
         }
         actions={
           <RoomActions
+            saveStatus={saveStatus}
+            onSave={handleSaveNow}
             isTemplatesOpen={isTemplatesOpen}
             onOpenTemplates={() => setIsTemplatesOpen(true)}
             isShareOpen={isShareOpen}
@@ -61,6 +84,8 @@ export function EditorRoom({
             isTemplatesOpen={isTemplatesOpen}
             onOpenTemplatesChange={setIsTemplatesOpen}
             isAiOpen={isAiOpen}
+            onSaveStatusChange={handleSaveStatusChange}
+            onSaveReady={handleSaveReady}
           />
           <AiSidebar isOpen={isAiOpen} onClose={() => setIsAiOpen(false)} />
         </div>
@@ -76,6 +101,8 @@ export function EditorRoom({
 }
 
 interface RoomActionsProps {
+  saveStatus: CanvasSaveStatus;
+  onSave: () => void;
   isTemplatesOpen: boolean;
   onOpenTemplates: () => void;
   isShareOpen: boolean;
@@ -85,6 +112,8 @@ interface RoomActionsProps {
 }
 
 function RoomActions({
+  saveStatus,
+  onSave,
   isTemplatesOpen,
   onOpenTemplates,
   isShareOpen,
@@ -93,9 +122,35 @@ function RoomActions({
   onToggleAi,
 }: RoomActionsProps) {
   const aiLabel = isAiOpen ? "Close AI sidebar" : "Open AI sidebar";
+  const saveLabel =
+    saveStatus === "saving"
+      ? "Saving..."
+      : saveStatus === "error"
+        ? "Save failed"
+        : "Saved";
 
   return (
     <>
+      <Button
+        type="button"
+        variant="ghost"
+        className="gap-1.5 px-2 text-copy-secondary"
+        aria-live="polite"
+        onClick={onSave}
+      >
+        <span className="text-sm">Save</span>
+        <span
+          className={
+            saveStatus === "error"
+              ? "text-state-error"
+              : saveStatus === "saving"
+                ? "text-copy-muted"
+                : "text-state-success"
+          }
+        >
+          {saveLabel}
+        </span>
+      </Button>
       <Button
         type="button"
         variant="ghost"

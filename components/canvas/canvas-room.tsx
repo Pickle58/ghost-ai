@@ -9,12 +9,15 @@ import {
 import { Component, useState, type ReactNode } from "react";
 
 import { FlowCanvas } from "@/components/canvas/flow-canvas";
+import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave";
 
 interface CanvasRoomProps {
   roomId: string;
   isTemplatesOpen?: boolean;
   onOpenTemplatesChange?: (open: boolean) => void;
   isAiOpen?: boolean;
+  onSaveStatusChange?: (status: CanvasSaveStatus) => void;
+  onSaveReady?: (saveNow: () => Promise<void>) => void;
 }
 
 const initialPresence = {
@@ -27,6 +30,8 @@ export function CanvasRoom({
   isTemplatesOpen,
   onOpenTemplatesChange,
   isAiOpen,
+  onSaveStatusChange,
+  onSaveReady,
 }: CanvasRoomProps) {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
@@ -42,9 +47,12 @@ export function CanvasRoom({
                 fallback={<CanvasMessage>Loading canvas…</CanvasMessage>}
               >
                 <FlowCanvas
+                  projectId={roomId}
                   isTemplatesOpen={isTemplatesOpen}
                   onOpenTemplatesChange={onOpenTemplatesChange}
                   isAiOpen={isAiOpen}
+                  onSaveStatusChange={onSaveStatusChange}
+                  onSaveReady={onSaveReady}
                 />
               </ClientSideSuspense>
             </CanvasErrorBoundary>
