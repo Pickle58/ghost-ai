@@ -4,15 +4,14 @@ import {
   Handle,
   NodeResizeControl,
   Position,
-  useConnection,
   useReactFlow,
   type ControlPosition,
   type NodeProps,
 } from "@xyflow/react";
 
+import { NodeColorToolbar } from "@/components/canvas/node-color-toolbar";
 import { NodeLabel } from "@/components/canvas/node-label";
 import { NodeShapeGraphic } from "@/components/canvas/node-shape";
-import { cn } from "@/lib/utils";
 import {
   DEFAULT_NODE_SIZES,
   MIN_NODE_SIZE,
@@ -50,6 +49,17 @@ const RESIZE_HANDLE_STYLE = {
   zIndex: 2,
 } as const;
 
+const CONNECTION_HANDLE_STYLE = {
+  width: 6,
+  height: 6,
+  borderRadius: 9999,
+  backgroundColor: "var(--text-primary)",
+  borderColor: "var(--bg-base)",
+  borderStyle: "solid",
+  borderWidth: 1,
+  zIndex: 3,
+} as const;
+
 export function CanvasNodeView({
   id,
   data,
@@ -58,7 +68,6 @@ export function CanvasNodeView({
   selected,
 }: NodeProps<CanvasNode>) {
   const { updateNodeData } = useReactFlow<CanvasNode, CanvasEdge>();
-  const connecting = useConnection((connection) => connection.inProgress);
   const fallback = DEFAULT_NODE_SIZES[data.shape];
 
   return (
@@ -69,6 +78,12 @@ export function CanvasNodeView({
         height: positiveSize(height, fallback.height),
       }}
     >
+      {selected ? (
+        <NodeColorToolbar
+          activeFill={data.color}
+          onSelect={(color) => updateNodeData(id, { color })}
+        />
+      ) : null}
       <NodeShapeGraphic shape={data.shape} fill={data.color} />
       {selected ? <SelectionOutline /> : null}
       <NodeLabel
@@ -93,11 +108,10 @@ export function CanvasNodeView({
           id={handle.id}
           type="source"
           position={handle.position}
-          className={cn(
-            "opacity-0 transition-opacity group-hover:opacity-100",
-            (selected || connecting) && "opacity-100",
-          )}
-          style={{ ...HANDLE_DOT, zIndex: 3 }}
+          role="button"
+          aria-label={`${handle.id} connection`}
+          className="opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+          style={CONNECTION_HANDLE_STYLE}
         />
       ))}
     </div>

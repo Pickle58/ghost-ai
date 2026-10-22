@@ -68,7 +68,7 @@ Default node color: `#1F1F1F` with `#EDEDED` text.
 
 ### Edge Style
 
-Bezier path with no arrow marker. The curve bows between the two handles. Default edge color is the primary text color. Stroke width is 1px — edges are visually secondary to nodes.
+Right-angle (smooth-step) path with no arrowhead. Light 1px stroke with rounded ends. Edges stay slightly dimmed at rest and brighten when hovered or selected. An invisible wider hit area makes them easier to click without thickening the visible line. Saved labels render as small pill badges at the path midpoint.
 
 ### Node Shapes
 
@@ -83,7 +83,7 @@ Bezier path with no arrow marker. The curve bows between the two handles. Defaul
 
 ### Connection Handles
 
-A selected node draws a thin light-gray rectangle on its bounds. The shape keeps its resting border; selection is that outer rectangle plus the handles. Small light circular handles sit on the rectangle: one at each corner and one at the middle of each side. Corner handles resize the node. Side handles start a connection and stay hidden until the node is hovered, selected, or a connection is in progress.
+A selected node draws a thin light-gray rectangle on its bounds. The shape keeps its resting border; selection is that outer rectangle plus the resize handles. Small white circular connection handles with a dark border sit on the middle of each side. They stay hidden until the node is hovered, then fade in. Users can connect from any handle to any other handle. Corner handles resize the node.
 
 ### Canvas Background
 

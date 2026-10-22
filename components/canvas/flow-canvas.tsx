@@ -10,6 +10,8 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  type Connection,
+  type DefaultEdgeOptions,
   type EdgeTypes,
   type NodeTypes,
 } from "@xyflow/react";
@@ -45,9 +47,12 @@ const edgeTypes: EdgeTypes = {
   [CANVAS_EDGE_TYPE]: CanvasEdgeView,
 };
 
-const defaultEdgeOptions = {
+const defaultEdgeOptions: DefaultEdgeOptions = {
   type: CANVAS_EDGE_TYPE,
   style: canvasEdgeStyle,
+  data: {
+    label: "",
+  },
 };
 
 export function FlowCanvas() {
@@ -100,6 +105,13 @@ function FlowCanvasSurface() {
     ]);
   }
 
+  function handleConnect(connection: Connection) {
+    onConnect({
+      ...defaultEdgeOptions,
+      ...connection,
+    });
+  }
+
   return (
     <div
       className="relative h-full w-full"
@@ -111,13 +123,13 @@ function FlowCanvasSurface() {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onConnect={handleConnect}
         onDelete={onDelete}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         connectionMode={ConnectionMode.Loose}
-        connectionLineType={ConnectionLineType.Bezier}
+        connectionLineType={ConnectionLineType.SmoothStep}
         connectionLineStyle={canvasEdgeStyle}
         fitView
         colorMode="dark"
