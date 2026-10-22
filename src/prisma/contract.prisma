@@ -20,6 +20,18 @@ model Project {
   @@index([createdAt])
 }
 
+model TaskRun {
+  id        String @id @default(uuid())
+  runId     String @unique
+  projectId String
+  userId    String
+  createdAt TimestamptzString @default(now())
+
+  @@index([runId])
+  @@index([userId, projectId])
+  @@index([projectId, createdAt])
+}
+
 model ProjectCollaborator {
   id        String @id @default(uuid())
   projectId String

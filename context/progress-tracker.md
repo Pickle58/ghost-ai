@@ -8,9 +8,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- AI sidebar shell (Feature 20).
+- Finish the AI design pipeline from the backend task trigger through task recording and authenticated run tokens.
 
 ## Completed
+
+- Fixed the shape drop offset so a dropped node centers on the cursor by converting the canvas-relative pointer through the React Flow transform before placing the node.
 
 - Design system: shadcn/ui configured with Button, Card, Dialog, Input, Tabs, Textarea, and ScrollArea. `lucide-react` is installed. `lib/utils.ts` exports `cn()`. Theme tokens in `app/globals.css` drive the dark palette, and shadcn semantic colors alias those tokens.
 - Editor chrome: fixed-height navbar with a sidebar toggle, an overlay project sidebar, and a reusable dialog pattern. The sidebar has My Projects and Shared tabs and a full-width New Project button.
@@ -32,14 +34,19 @@ Update this file whenever the current phase, active feature, or implementation s
 - Canvas ergonomics: a pill-shaped control bar at the bottom-left of the canvas (`bottom-6 left-6`) provides smooth animated zoom in, zoom out, and fit view controls (200ms duration) alongside Liveblocks history undo and redo buttons. Undo and redo disable and dim automatically when history is empty. `useKeyboardShortcuts` listens on `window` for `+`/`=` (zoom in), `-` (zoom out), `Cmd/Ctrl + Z` (undo), `Cmd/Ctrl + Shift + Z` / `Cmd/Ctrl + Y` (redo), while ignoring inputs, textareas, and editable fields.
 - Starter system design templates (Feature 18): `components/editor/starter-templates.ts` defines `CanvasTemplate` and `CANVAS_TEMPLATES` with microservices, event-driven, and CI/CD pipeline architectures using shared canvas types and the standard node color palette. `StarterTemplatesModal` in `components/editor/starter-templates-modal.tsx` opens a dialog with a scrollable card grid and lightweight SVG diagram previews fitting each template's bounding box without React Flow. The navbar includes a `LayoutTemplate` action button that opens the modal. Importing a template clears all existing nodes and edges via `onDelete({ nodes, edges })`, adds the cloned template nodes and edges via `onNodesChange` and `onEdgesChange`, and animates `fitView({ duration: 200 })`.
 - AI sidebar shell (Feature 20): the right-side floating AI panel is separated into `components/editor/ai-sidebar.tsx`, keeps the parent-controlled open/close state, preserves the existing slide-in placement, and includes the `AI Workspace` header, `AI Architect` and `Specs` tabs, starter prompt chips, chat composer, and static demo spec card using the project’s dark theme tokens.
+- Canvas autosave and restore: `@vercel/blob` stores the JSON payload and the blob URL is persisted to the Prisma project record via `/api/projects/[projectId]/canvas`; the editor loads saved canvas state only when the Liveblocks room is empty, and the save status indicator reflects saving, saved, and error states through a debounced `useCanvasAutosave` hook.
+- Autosave status wiring: fixed the editor-level callback flow to avoid render-time state updates while the canvas status and manual-save callback propagate to the room toolbar.
 
 ## In Progress
 
-- None yet.
+- Real AI canvas generation logic (Feature 23): once the task trigger and run tracking are in place, add the background design agent that mutates the collaborative canvas and publishes AI status/presence.
+
+## Completed
+
+- AI design generation backend flow (Feature 22): `POST /api/ai/design` accepts a prompt and project context, creates a `TaskRun` record, and triggers the background design task. `POST /api/ai/design/token` verifies ownership against that run record and returns a run-scoped token. `trigger/design-agent.ts` exports the design task contract and token helper, and the Prisma contract was regenerated so the new `TaskRun` model is available without breaking existing `Project` typing.
 
 ## Next Up
 
-- Presence avatars and live multiplayer cursors (Feature 19).
 - Decide sign-up and sign-in identifiers and social providers.
 - Protect individual pages and Server Actions with `await auth.protect()` when those routes need a signed-in user. Project API routes return 401 from `auth()` instead, because `auth.protect()` redirects.
 
@@ -69,6 +76,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Session Notes
 
+- Fixed the AI sidebar composer to ignore composition events during IME input and to scroll the message list to the newest message after each chat update.
 - Selected nodes use a thin light-gray bounds rectangle and 6px corner resize handles. Connection handles are white dots with a dark border and appear only on node hover. Edges are right-angle `canvasEdge` paths with a 1px rounded stroke, a closed arrow, and an HTTP-style pill label at the midpoint. At rest the stroke uses `--text-muted`; hover and selection use `--text-primary`.
 - The label textarea still grows with its text. Once that height reaches the node, the field scrolls vertically.
 

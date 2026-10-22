@@ -32,6 +32,7 @@ export function CanvasEdgeView({
   targetY,
   sourcePosition,
   targetPosition,
+  markerEnd,
   style,
   selected,
   data,
@@ -68,6 +69,7 @@ export function CanvasEdgeView({
           id={id}
           path={edgePath}
           interactionWidth={32}
+          markerEnd={markerEnd}
           style={{
             ...style,
             ...strokeStyle,
