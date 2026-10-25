@@ -33,6 +33,7 @@ import {
   type MouseEvent,
 } from "react";
 
+import { AiStatusFeed } from "@/components/canvas/ai-status-feed";
 import { CanvasControlBar } from "@/components/canvas/canvas-control-bar";
 import {
   CanvasEdgeView,
@@ -46,6 +47,7 @@ import type { CanvasTemplate } from "@/components/editor/starter-templates";
 import { StarterTemplatesModal } from "@/components/editor/starter-templates-modal";
 import { useCanvasAutosave } from "@/hooks/use-canvas-autosave";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useAiPresence } from "@/hooks/use-ai-presence";
 import {
   createDroppedCanvasNode,
   parseShapeDragPayload,
@@ -141,6 +143,7 @@ function FlowCanvasSurface({
   const reactFlow = useReactFlow();
   const { screenToFlowPosition, zoomIn, zoomOut, fitView } = reactFlow;
   const updateMyPresence = useUpdateMyPresence();
+  const isAiThinking = useAiPresence(projectId);
   const [hasLoadedInitialCanvas, setHasLoadedInitialCanvas] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const retryLoad = useCallback(() => {
@@ -474,7 +477,8 @@ function FlowCanvasSurface({
         />
         <LiveCursors />
       </ReactFlow>
-      <CanvasParticipantAvatars isAiOpen={isAiOpen} />
+      <AiStatusFeed />
+      <CanvasParticipantAvatars isAiOpen={isAiOpen} isAiThinking={isAiThinking} />
       <ShapePanel />
       <CanvasControlBar
         onZoomIn={handleZoomIn}

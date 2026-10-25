@@ -37,6 +37,42 @@
       "skillPath": "skills/liveblocks-best-practices/SKILL.md",
       "computedHash": "df4f54f66e81c580d25c5fee989768368837df694ab63c0f4a0fd70500cd16af"
     },
+    "trigger-authoring-chat-agent": {
+      "source": "triggerdotdev/skills",
+      "sourceType": "github",
+      "skillPath": "trigger-authoring-chat-agent/SKILL.md",
+      "computedHash": "4da7b5e379b10b84197a01dd2aceb25e0a20a51df44a5acba1488b4760962ef4"
+    },
+    "trigger-chat-agent-advanced": {
+      "source": "triggerdotdev/skills",
+      "sourceType": "github",
+      "skillPath": "trigger-chat-agent-advanced/SKILL.md",
+      "computedHash": "0b14509182349fafb3093e8a80a2dba1bf9543f2f36ecc58dc59d74196d36bcc"
+    },
+    "trigger-cost-savings": {
+      "source": "triggerdotdev/skills",
+      "sourceType": "github",
+      "skillPath": "trigger-cost-savings/SKILL.md",
+      "computedHash": "534a9ae5335e926aa6ed94d98348e551a7f0857c344456b91a317a0383d2bda1"
+    },
+    "trigger-realtime": {
+      "source": "triggerdotdev/skills",
+      "sourceType": "github",
+      "skillPath": "trigger-realtime/SKILL.md",
+      "computedHash": "471bdef9043b6208045c4a73eb99b78d50ab8019c06c781f5cc5835056d087aa"
+    },
+    "trigger-setup": {
+      "source": "triggerdotdev/skills",
+      "sourceType": "github",
+      "skillPath": "trigger-setup/SKILL.md",
+      "computedHash": "7822bcca387888529bb4f1697ecb8462c78b7bd763975569ead9ed854af1a974"
+    },
+    "trigger-tasks": {
+      "source": "triggerdotdev/skills",
+      "sourceType": "github",
+      "skillPath": "trigger-tasks/SKILL.md",
+      "computedHash": "42238a27d6e9a428cff0cf076a99f3d82edc99a88eace8175b11273db9a1da2c"
+    },
     "yjs-best-practices": {
       "source": "liveblocks/skills",
       "sourceType": "github",

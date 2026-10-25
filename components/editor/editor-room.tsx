@@ -86,8 +86,13 @@ export function EditorRoom({
             isAiOpen={isAiOpen}
             onSaveStatusChange={handleSaveStatusChange}
             onSaveReady={handleSaveReady}
-          />
-          <AiSidebar isOpen={isAiOpen} onClose={() => setIsAiOpen(false)} />
+          >
+            <AiSidebar
+              isOpen={isAiOpen}
+              onClose={() => setIsAiOpen(false)}
+              projectId={project.id}
+            />
+          </CanvasRoom>
         </div>
       </EditorWorkspace>
       <ShareDialog

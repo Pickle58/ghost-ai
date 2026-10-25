@@ -18,6 +18,7 @@ interface CanvasRoomProps {
   isAiOpen?: boolean;
   onSaveStatusChange?: (status: CanvasSaveStatus) => void;
   onSaveReady?: (saveNow: () => Promise<void>) => void;
+  children?: ReactNode;
 }
 
 const initialPresence = {
@@ -32,11 +33,12 @@ export function CanvasRoom({
   isAiOpen,
   onSaveStatusChange,
   onSaveReady,
+  children,
 }: CanvasRoomProps) {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
       <RoomProvider id={roomId} initialPresence={initialPresence}>
-        <div className="h-full w-full">
+        <div className="relative h-full w-full">
           <CanvasConnectionFallback>
             <CanvasErrorBoundary
               fallback={
@@ -57,6 +59,7 @@ export function CanvasRoom({
               </ClientSideSuspense>
             </CanvasErrorBoundary>
           </CanvasConnectionFallback>
+          {children}
         </div>
       </RoomProvider>
     </LiveblocksProvider>

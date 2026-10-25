@@ -15,10 +15,11 @@ Complete the existing AI sidebar placeholder and turn it into a proper floating 
    - use `text-primary-text` for the title
    - use `text-muted-text` for the subtitle
 
-3. Add a tabbed layout with two tabs.
+3. Add a tabbed layout with three tabs.
 
    Use shadcn `Tabs`.
    - `AI Architect`
+   - `Chat`
    - `Specs`
    - active tab should use the accent styling, like `bg-accent` and `text-accent`
    - inactive tab text should stay muted with `text-muted-text`
@@ -39,13 +40,20 @@ Complete the existing AI sidebar placeholder and turn it into a proper floating 
    - send button should use `bg-accent text-white`
    - `Enter` submits, `Shift+Enter` adds a newline
 
-5. Build the Specs tab.
+5. Build the Chat tab.
+
+   The Chat tab is the room chat surface from Feature 25.
+   - reuse the same scrollable chat area, bubbles, and composer chrome as AI Architect
+   - empty state should describe room chat, not architecture generation
+   - sending a Chat message writes only to `ai-chat` and must not start a design run
+
+6. Build the Specs tab.
    - show a `Generate Spec` button using `bg-accent text-white`
    - show a demo spec card for now
    - style the card with `bg-elevated` and `border-surface-border`
    - include a file/spec icon, title, short snippet, and disabled download action
 
-6. Use the existing project color tokens.
+7. Use the existing project color tokens.
 
    Check `globals.css`, `ui-context.md` or the Tailwind mapping before adding direct color values. Avoid inventing new colors if a matching token already exists.
 
@@ -60,7 +68,8 @@ Complete the existing AI sidebar placeholder and turn it into a proper floating 
 
 - AI sidebar is separated into its own component.
 - Existing floating slide-in behavior is preserved.
-- Sidebar includes AI Architect and Specs tabs.
+- Sidebar includes AI Architect, Chat, and Specs tabs.
 - AI Architect tab has empty state, starter chips, and input UI.
+- Chat tab has a room-chat empty state and the shared chat composer.
 - Specs tab has a generate button and a static demo spec card.
 - `npm run build` passes.

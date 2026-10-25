@@ -18,9 +18,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'956bcaea35185f09ff3c8dc9c23e88b3bb2840d31ea58c2d525c172303492c1c'>;
+  StorageHashBase<'34628472d6f73d55827c89196defb263b6e861c31ba93bf9f7276111442894ae'>;
 export type ExecutionHash =
-  ExecutionHashBase<'5edb88f21e3f27482df74e60551210cb427e9a502a395ce4a27bff9c8e106c1f'>;
+  ExecutionHashBase<'3497c2e87bf15529f4acd987b99f5dda81e197b87a13164917aefd2de358b998'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -250,6 +250,12 @@ export type FieldOutputTypes = {
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly projectId: CodecTypes['pg/text@1']['output'];
     };
+    readonly ProjectSpec: {
+      readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
+      readonly filePath: CodecTypes['pg/text@1']['output'];
+      readonly id: CodecTypes['pg/text@1']['output'];
+      readonly projectId: CodecTypes['pg/text@1']['output'];
+    };
     readonly TaskRun: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly id: CodecTypes['pg/text@1']['output'];
@@ -274,6 +280,12 @@ export type FieldInputTypes = {
     readonly ProjectCollaborator: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly email: CodecTypes['pg/text@1']['input'];
+      readonly id: CodecTypes['pg/text@1']['input'];
+      readonly projectId: CodecTypes['pg/text@1']['input'];
+    };
+    readonly ProjectSpec: {
+      readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
+      readonly filePath: CodecTypes['pg/text@1']['input'];
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly projectId: CodecTypes['pg/text@1']['input'];
     };
@@ -304,6 +316,12 @@ export type StorageColumnTypes = {
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly projectId: CodecTypes['pg/text@1']['output'];
     };
+    readonly ProjectSpec: {
+      readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
+      readonly filePath: CodecTypes['pg/text@1']['output'];
+      readonly id: CodecTypes['pg/text@1']['output'];
+      readonly projectId: CodecTypes['pg/text@1']['output'];
+    };
     readonly TaskRun: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly id: CodecTypes['pg/text@1']['output'];
@@ -328,6 +346,12 @@ export type StorageColumnInputTypes = {
     readonly ProjectCollaborator: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly email: CodecTypes['pg/text@1']['input'];
+      readonly id: CodecTypes['pg/text@1']['input'];
+      readonly projectId: CodecTypes['pg/text@1']['input'];
+    };
+    readonly ProjectSpec: {
+      readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
+      readonly filePath: CodecTypes['pg/text@1']['input'];
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly projectId: CodecTypes['pg/text@1']['input'];
     };
@@ -361,6 +385,14 @@ export namespace Models {
     project: public_Project;
     readonly [RelationKeys]?: 'project';
   };
+  export type public_ProjectSpec = {
+    createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
+    filePath: CodecTypes['pg/text@1']['output'];
+    id: CodecTypes['pg/text@1']['output'];
+    projectId: CodecTypes['pg/text@1']['output'];
+    project: public_Project;
+    readonly [RelationKeys]?: 'project';
+  };
   export type public_TaskRun = {
     createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
     id: CodecTypes['pg/text@1']['output'];
@@ -375,6 +407,7 @@ export declare const models: {
   public: {
     Project: Models.public_Project;
     ProjectCollaborator: Models.public_ProjectCollaborator;
+    ProjectSpec: Models.public_ProjectSpec;
     TaskRun: Models.public_TaskRun;
   };
 };
@@ -536,6 +569,65 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly ProjectSpec: {
+              columns: {
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly many: false;
+                };
+                readonly filePath: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly projectId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'ProjectSpec_projectId_createdAt_idx_d2d6484f';
+                  readonly prefix: 'ProjectSpec_projectId_createdAt_idx';
+                  readonly columns: readonly ['projectId', 'createdAt'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'ProjectSpec_projectId_idx_a96e4d92';
+                  readonly prefix: 'ProjectSpec_projectId_idx';
+                  readonly columns: readonly ['projectId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'ProjectSpec';
+                    readonly columns: readonly ['projectId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Project';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly TaskRun: {
               columns: {
                 readonly createdAt: {
@@ -609,6 +701,10 @@ type ContractBase = Omit<
     readonly ProjectCollaborator: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'ProjectCollaborator';
+    };
+    readonly ProjectSpec: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'ProjectSpec';
     };
     readonly TaskRun: { readonly namespace: 'public' & NamespaceId; readonly model: 'TaskRun' };
   };
@@ -715,6 +811,53 @@ type ContractBase = Omit<
               readonly fields: {
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly email: { readonly column: 'email' };
+                readonly id: { readonly column: 'id' };
+                readonly projectId: { readonly column: 'projectId' };
+              };
+            };
+          };
+          readonly ProjectSpec: {
+            readonly fields: {
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly filePath: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly projectId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+            };
+            readonly relations: {
+              readonly project: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Project';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['projectId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'ProjectSpec';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly filePath: { readonly column: 'filePath' };
                 readonly id: { readonly column: 'id' };
                 readonly projectId: { readonly column: 'projectId' };
               };
@@ -831,6 +974,14 @@ type ContractBase = Omit<
           readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'ProjectCollaborator';
+            readonly field: 'id';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'ProjectSpec';
             readonly field: 'id';
             readonly namespace: 'public';
           };

@@ -12,6 +12,10 @@
       "model": "ProjectCollaborator",
       "namespace": "public"
     },
+    "ProjectSpec": {
+      "model": "ProjectSpec",
+      "namespace": "public"
+    },
     "TaskRun": {
       "model": "TaskRun",
       "namespace": "public"
@@ -199,6 +203,74 @@
               },
               "namespaceId": "public",
               "table": "ProjectCollaborator"
+            }
+          },
+          "ProjectSpec": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "filePath": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "projectId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "project": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "projectId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Project",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "filePath": {
+                  "column": "filePath"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "projectId": {
+                  "column": "projectId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "ProjectSpec"
             }
           },
           "TaskRun": {
@@ -451,6 +523,81 @@
                 }
               ]
             },
+            "ProjectSpec": {
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "filePath": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "projectId": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "ProjectSpec_projectId_idx_a96e4d92"
+                  },
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "projectId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "ProjectSpec"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Project"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "projectId",
+                    "createdAt"
+                  ],
+                  "name": "ProjectSpec_projectId_createdAt_idx_d2d6484f",
+                  "prefix": "ProjectSpec_projectId_createdAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "projectId"
+                  ],
+                  "name": "ProjectSpec_projectId_idx_a96e4d92",
+                  "prefix": "ProjectSpec_projectId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "TaskRun": {
               "columns": {
                 "createdAt": {
@@ -532,10 +679,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "956bcaea35185f09ff3c8dc9c23e88b3bb2840d31ea58c2d525c172303492c1c"
+    "storageHash": "34628472d6f73d55827c89196defb263b6e861c31ba93bf9f7276111442894ae"
   },
   "execution": {
-    "executionHash": "5edb88f21e3f27482df74e60551210cb427e9a502a395ce4a27bff9c8e106c1f",
+    "executionHash": "3497c2e87bf15529f4acd987b99f5dda81e197b87a13164917aefd2de358b998",
     "mutations": {
       "defaults": [
         {
@@ -571,6 +718,17 @@
           },
           "ref": {
             "entry": "ProjectCollaborator",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "ProjectSpec",
             "field": "id",
             "namespace": "public"
           }

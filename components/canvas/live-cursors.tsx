@@ -6,6 +6,7 @@ import {
   useOthersConnectionIds,
 } from "@liveblocks/react/suspense";
 import { useViewport } from "@xyflow/react";
+import { Loader2 } from "lucide-react";
 
 export function LiveCursors() {
   const othersConnectionIds = useOthersConnectionIds();
@@ -30,8 +31,10 @@ function LiveCursor({ connectionId }: LiveCursorProps) {
   const { userId: currentUserId } = useAuth();
   const otherUserId = useOther(connectionId, (other) => other.id);
   const cursor = useOther(connectionId, (other) => other.presence.cursor);
+  const thinking = useOther(connectionId, (other) => other.presence.thinking);
   const info = useOther(connectionId, (other) => other.info);
   const { x: panX, y: panY, zoom } = useViewport();
+  const isThinking = thinking === true;
 
   if (!cursor || (currentUserId && otherUserId === currentUserId)) {
     return null;
@@ -67,10 +70,13 @@ function LiveCursor({ connectionId }: LiveCursorProps) {
         />
       </svg>
       <div
-        className="absolute left-3.5 top-3.5 select-none rounded-md px-1.5 py-0.5 text-[11px] font-medium leading-none text-white shadow-md whitespace-nowrap"
+        className="absolute left-3.5 top-3.5 flex items-center gap-1 select-none rounded-md px-1.5 py-0.5 text-[11px] font-medium leading-none text-white shadow-md whitespace-nowrap"
         style={{ backgroundColor: color }}
       >
-        {name}
+        {isThinking ? (
+          <Loader2 className="size-3 shrink-0 animate-spin" aria-hidden="true" />
+        ) : null}
+        <span>{name}</span>
       </div>
     </div>
   );

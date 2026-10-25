@@ -49,15 +49,16 @@
 
 ### Design Generation
 
-- Input: user prompt, project context, and current canvas state.
-- Execution: durable background task via Trigger.dev.
-- Output: structured node and edge updates written into the shared Liveblocks room.
+- Input: user prompt and project context resolved from `roomId`.
+- Execution: `POST /api/ai/design` authenticates the user, resolves project access from `roomId` (never a client-supplied `projectId`), creates a `TaskRun`, and triggers `design-agent` with `projectId` and `roomId` both set to `project.id`. Gemini (`@ai-sdk/google`) plans canvas operations, then the task applies them through `mutateFlow`.
+- Output: structured node and edge updates written into the shared Liveblocks room, plus AI presence (`cursor`, `thinking`) and `ai-status-feed` messages so every participant can see progress.
+- Room chat lives in a separate Liveblocks feed named `ai-chat`. Status and chat messages stay in their own feeds. The AI sidebar has AI Architect, Chat, and Specs tabs. Chat writes only to `ai-chat`. AI Architect also writes to `ai-chat` and starts a design run through `POST /api/ai/design`, stores `{ runId, publicToken }`, and tracks the run with `useRealtimeRun`. Canvas nodes and edges still update only through Liveblocks.
 
 ### Spec Generation
 
-- Input: current canvas graph and project context.
-- Execution: durable background task via Trigger.dev.
-- Output: Markdown technical spec saved to the filesystem and linked to the project in the database.
+- Input: `roomId`, `chatHistory`, and project context resolved from `roomId`. The current canvas graph is read on the server from the Liveblocks room snapshot. Client `nodes` and `edges` are ignored.
+- Execution: `POST /api/ai/spec` authenticates the user, resolves project access from `roomId` (never a client-supplied `projectId`), creates a `TaskRun`, and triggers `generate-spec`. `POST /api/ai/spec/token` issues a 1-hour Trigger.dev public access token scoped to that run, only for the run owner. Gemini (`@ai-sdk/google`) writes the spec as task output.
+- Output of the generation task: plain Markdown. After generation, the task uploads that Markdown to Vercel Blob at `specs/{projectId}/{specId}.md` and stores the blob URL on `ProjectSpec.filePath`. Authenticated owners and collaborators list metadata through `GET /api/projects/[projectId]/specs` and download through `GET /api/projects/[projectId]/specs/[specId]/download`, which streams the file after project and spec access checks. The Specs tab previews that same download as Markdown. Blob URLs are not returned to the client.
 
 ## Invariants
 

@@ -1,3 +1,4 @@
+import { resolveDesignRunRequest } from "@/lib/design-request";
 import { jsonError } from "@/lib/http";
 import { getAccessibleProject } from "@/lib/project-access";
 import { readJsonBody } from "@/lib/project-body";
@@ -16,48 +17,45 @@ export async function POST(request: Request) {
     return bodyResult.response;
   }
 
-  const prompt = typeof bodyResult.body?.prompt === "string"
-    ? bodyResult.body.prompt.trim()
-    : "";
-  const projectId = typeof bodyResult.body?.projectId === "string"
-    ? bodyResult.body.projectId
-    : "";
-  const roomId = typeof bodyResult.body?.roomId === "string"
-    ? bodyResult.body.roomId
-    : projectId;
+  const resolved = await resolveDesignRunRequest(
+    bodyResult.body,
+    authResult.identity,
+    getAccessibleProject,
+  );
+  if (!resolved.ok) {
+    if (resolved.status === 400) {
+      return jsonError(resolved.error, 400);
+    }
 
-  if (!prompt || !projectId) {
-    return jsonError("Prompt and projectId are required", 400);
-  }
-
-  const project = await getAccessibleProject(projectId, authResult.identity);
-  if (!project) {
-    const existing = await db.orm.public.Project.where({ id: projectId }).first();
-    return jsonError(existing ? "Forbidden" : "Project not found", existing ? 403 : 404);
+    const existing = await db.orm.public.Project.where({
+      id: resolved.accessRoomId,
+    }).first();
+    return jsonError(
+      existing ? "Forbidden" : "Project not found",
+      existing ? 403 : 404,
+    );
   }
 
   const runId = `design-${crypto.randomUUID()}`;
 
   await db.orm.public.TaskRun.create({
     runId,
-    projectId,
+    projectId: resolved.projectId,
     userId: authResult.identity.userId,
   });
 
-  await designAgentTask({
+  const queued = await designAgentTask({
     runId,
-    projectId,
-    roomId,
-    prompt,
+    projectId: resolved.projectId,
+    roomId: resolved.roomId,
+    prompt: resolved.prompt,
     userId: authResult.identity.userId,
   });
 
   return Response.json(
     {
-      runId,
-      projectId,
-      roomId,
-      status: "queued",
+      runId: queued.triggerRunId,
+      publicToken: queued.publicToken,
     },
     { status: 202 },
   );

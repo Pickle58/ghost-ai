@@ -4,3 +4,7 @@ allowBuilds:
   sharp: false
   unrs-resolver: false
   workerd: true
+minimumReleaseAgeExclude:
+  - '@trigger.dev/core@4.7.7 || 4.8.0'
+  - '@trigger.dev/sdk@4.7.7 || 4.8.0'
+  - '@trigger.dev/build@4.7.7 || 4.8.0'

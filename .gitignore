@@ -43,5 +43,8 @@ next-env.d.ts
 # local notes
 context/current-issues.md
 
+# trigger.dev
+.trigger
+
 # prisma
 dist/

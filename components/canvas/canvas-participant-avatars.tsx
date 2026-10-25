@@ -5,12 +5,16 @@ import { shallow, useOthers } from "@liveblocks/react/suspense";
 import { useMemo, useState } from "react";
 import { cn } from "cn";
 
+import { isAiUserId } from "@/lib/ai-presence";
+
 export interface CanvasParticipantAvatarsProps {
   isAiOpen?: boolean;
+  isAiThinking?: boolean;
 }
 
 export function CanvasParticipantAvatars({
   isAiOpen,
+  isAiThinking,
 }: CanvasParticipantAvatarsProps) {
   const { userId: currentUserId } = useAuth();
 
@@ -20,6 +24,7 @@ export function CanvasParticipantAvatars({
         connectionId: other.connectionId,
         id: other.id,
         info: other.info,
+        thinking: other.presence.thinking,
       })),
     shallow,
   );
@@ -31,6 +36,7 @@ export function CanvasParticipantAvatars({
       name: string;
       avatar: string;
       color: string;
+      thinking: boolean;
     }> = [];
 
     for (const other of others) {
@@ -41,6 +47,7 @@ export function CanvasParticipantAvatars({
           name: other.info?.name ?? "Collaborator",
           avatar: other.info?.avatar ?? "",
           color: other.info?.color ?? "#00c8d4",
+          thinking: other.thinking,
         });
       }
     }
@@ -68,6 +75,10 @@ export function CanvasParticipantAvatars({
               name={collaborator.name}
               avatar={collaborator.avatar}
               color={collaborator.color}
+              thinking={
+                collaborator.thinking ||
+                (Boolean(isAiThinking) && isAiUserId(collaborator.id))
+              }
             />
           ))}
           {overflowCount > 0 && (
@@ -107,18 +118,22 @@ interface CollaboratorAvatarProps {
   name: string;
   avatar?: string;
   color: string;
+  thinking?: boolean;
 }
 
-function CollaboratorAvatar({ name, avatar, color }: CollaboratorAvatarProps) {
+function CollaboratorAvatar({ name, avatar, color, thinking }: CollaboratorAvatarProps) {
   const [imageError, setImageError] = useState(false);
   const initials = getInitials(name);
   const showImage = Boolean(avatar) && !imageError;
 
   return (
     <div
-      className="relative size-8 shrink-0 select-none overflow-hidden rounded-full border border-border-subtle/50 ring-2 ring-base"
-      title={name}
-      aria-label={name}
+      className={cn(
+        "relative size-8 shrink-0 select-none overflow-hidden rounded-full border border-border-subtle/50 ring-2 ring-base",
+        thinking && "ring-ai-text",
+      )}
+      title={thinking ? `${name} thinking` : name}
+      aria-label={thinking ? `${name} thinking` : name}
     >
       {showImage ? (
         <img
