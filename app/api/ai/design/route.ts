@@ -1,4 +1,8 @@
-import { rejectIfAiRateLimited } from "@/lib/ai-rate-limit";
+import {
+  bindAiRateLimitReservation,
+  rejectIfAiRateLimited,
+  releaseAiRateLimitReservation,
+} from "@/lib/ai-rate-limit";
 import { resolveDesignRunRequest } from "@/lib/design-request";
 import { jsonError } from "@/lib/http";
 import { getAccessibleProject } from "@/lib/project-access";
@@ -37,32 +41,36 @@ export async function POST(request: Request) {
     );
   }
 
-  const rateLimited = await rejectIfAiRateLimited(authResult.identity.userId);
-  if (rateLimited) {
-    return rateLimited;
+  const rateLimited = await rejectIfAiRateLimited(
+    authResult.identity.userId,
+    resolved.projectId,
+  );
+  if (!rateLimited.ok) {
+    return rateLimited.response;
   }
 
   const runId = `design-${crypto.randomUUID()}`;
 
-  await db.orm.public.TaskRun.create({
-    runId,
-    projectId: resolved.projectId,
-    userId: authResult.identity.userId,
-  });
+  try {
+    await bindAiRateLimitReservation(rateLimited.reservationId, runId);
 
-  const queued = await designAgentTask({
-    runId,
-    projectId: resolved.projectId,
-    roomId: resolved.roomId,
-    prompt: resolved.prompt,
-    userId: authResult.identity.userId,
-  });
+    const queued = await designAgentTask({
+      runId,
+      projectId: resolved.projectId,
+      roomId: resolved.roomId,
+      prompt: resolved.prompt,
+      userId: authResult.identity.userId,
+    });
 
-  return Response.json(
-    {
-      runId: queued.triggerRunId,
-      publicToken: queued.publicToken,
-    },
-    { status: 202 },
-  );
+    return Response.json(
+      {
+        runId: queued.triggerRunId,
+        publicToken: queued.publicToken,
+      },
+      { status: 202 },
+    );
+  } catch (error) {
+    await releaseAiRateLimitReservation(rateLimited.reservationId).catch(() => undefined);
+    throw error;
+  }
 }

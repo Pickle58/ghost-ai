@@ -1,6 +1,10 @@
 import { tasks } from "@trigger.dev/sdk";
 
-import { rejectIfAiRateLimited } from "@/lib/ai-rate-limit";
+import {
+  bindAiRateLimitReservation,
+  rejectIfAiRateLimited,
+  releaseAiRateLimitReservation,
+} from "@/lib/ai-rate-limit";
 import { jsonError } from "@/lib/http";
 import { getAccessibleProject } from "@/lib/project-access";
 import { readJsonBody } from "@/lib/project-body";
@@ -35,22 +39,26 @@ export async function POST(request: Request) {
     );
   }
 
-  const rateLimited = await rejectIfAiRateLimited(authResult.identity.userId);
-  if (rateLimited) {
-    return rateLimited;
+  const rateLimited = await rejectIfAiRateLimited(
+    authResult.identity.userId,
+    project.id,
+  );
+  if (!rateLimited.ok) {
+    return rateLimited.response;
   }
 
-  const handle = await tasks.trigger<typeof generateSpec>("generate-spec", {
-    projectId: project.id,
-    roomId,
-    chatHistory,
-  });
+  try {
+    const handle = await tasks.trigger<typeof generateSpec>("generate-spec", {
+      projectId: project.id,
+      roomId,
+      chatHistory,
+    });
 
-  await db.orm.public.TaskRun.create({
-    runId: handle.id,
-    projectId: project.id,
-    userId: authResult.identity.userId,
-  });
+    await bindAiRateLimitReservation(rateLimited.reservationId, handle.id);
 
-  return Response.json({ runId: handle.id }, { status: 202 });
+    return Response.json({ runId: handle.id }, { status: 202 });
+  } catch (error) {
+    await releaseAiRateLimitReservation(rateLimited.reservationId).catch(() => undefined);
+    throw error;
+  }
 }

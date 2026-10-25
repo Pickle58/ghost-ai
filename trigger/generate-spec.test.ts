@@ -7,11 +7,12 @@ import {
 } from "@/types/spec-generation";
 
 import {
+  assertSpecHasRequiredHeadings,
   assertSpecSnapshotSize,
   MAX_SPEC_SNAPSHOT_EDGES,
   MAX_SPEC_SNAPSHOT_NODES,
 } from "./generate-spec";
-import { buildSpecPrompt } from "./spec-prompt";
+import { buildSpecPrompt, REQUIRED_SPEC_HEADINGS } from "./spec-prompt";
 
 describe("generate spec payload", () => {
   it("accepts a camelCase room and chat payload", () => {
@@ -144,16 +145,9 @@ describe("generate spec snapshot caps", () => {
   });
 });
 
-const REQUIRED_SPEC_SECTIONS = [
-  "Overview",
-  "Components",
-  "APIs / events",
-  "Data model",
-  "Authn / Authz",
-  "Threat model",
-  "Failure modes",
-  "Open questions",
-] as const;
+function completeSpecMarkdown() {
+  return REQUIRED_SPEC_HEADINGS.map((heading) => `## ${heading}\nKnown.`).join("\n");
+}
 
 function samplePromptInput() {
   return {
@@ -188,7 +182,7 @@ describe("generate spec prompt", () => {
   it("requires all eight spec sections and Assumption: for inferred detail", () => {
     const prompt = buildSpecPrompt(samplePromptInput());
 
-    for (const section of REQUIRED_SPEC_SECTIONS) {
+    for (const section of REQUIRED_SPEC_HEADINGS) {
       assert.ok(
         prompt.includes(section),
         `expected prompt to include required section "${section}"`,
@@ -205,5 +199,17 @@ describe("generate spec prompt", () => {
     const prompt = buildSpecPrompt(samplePromptInput());
 
     assert.equal(prompt.includes("spec-check-abc123"), false);
+  });
+});
+
+describe("generate spec heading acceptance", () => {
+  it("accepts all eight required headings and fails when one is missing", () => {
+    assert.doesNotThrow(() => assertSpecHasRequiredHeadings(completeSpecMarkdown()));
+
+    const missingThreat = completeSpecMarkdown().replace("## Threat model\nKnown.\n", "");
+    assert.throws(
+      () => assertSpecHasRequiredHeadings(missingThreat),
+      /missing required sections: Threat model/,
+    );
   });
 });

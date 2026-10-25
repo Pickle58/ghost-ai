@@ -9,6 +9,30 @@ export interface SpecPromptInput extends GenerateSpecTaskInput {
   edges: GenerateSpecEdge[];
 }
 
+export const REQUIRED_SPEC_HEADINGS = [
+  "Overview",
+  "Components",
+  "APIs / events",
+  "Data model",
+  "Authn / Authz",
+  "Threat model",
+  "Failure modes",
+  "Open questions",
+] as const;
+
+export function missingRequiredSpecHeadings(markdown: string): string[] {
+  return REQUIRED_SPEC_HEADINGS.filter((heading) => !hasSpecHeading(markdown, heading));
+}
+
+function hasSpecHeading(markdown: string, heading: string): boolean {
+  const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(
+    `^#{1,6}\\s+(?:\\d+\\.\\s+)?${escaped}(?:\\s.*)?$`,
+    "im",
+  );
+  return pattern.test(markdown);
+}
+
 export function buildSpecPrompt(input: SpecPromptInput): string {
   const nodes = input.nodes.map((node) => ({
     id: node.id,

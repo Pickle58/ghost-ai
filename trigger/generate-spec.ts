@@ -1,6 +1,6 @@
 import { createGoogle } from "@ai-sdk/google";
 import { Liveblocks } from "@liveblocks/node";
-import { AbortTaskRunError, logger, metadata, schemaTask } from "@trigger.dev/sdk";
+import { AbortTaskRunError, logger, metadata, schemaTask, wait } from "@trigger.dev/sdk";
 import { generateText } from "ai";
 
 import { readCanvasSnapshot } from "@/lib/liveblocks-flow";
@@ -8,7 +8,10 @@ import { toSpecEdges, toSpecNodes } from "@/lib/spec-payload";
 import { saveGeneratedSpec } from "@/lib/spec-storage";
 import { generateSpecTaskSchema } from "@/types/spec-generation";
 
-import { buildSpecPrompt } from "./spec-prompt";
+import { generateWithCapacityRetry, isDailyQuotaError } from "./ai-capacity";
+import { buildSpecPrompt, missingRequiredSpecHeadings } from "./spec-prompt";
+
+export { REQUIRED_SPEC_HEADINGS, missingRequiredSpecHeadings } from "./spec-prompt";
 
 export {
   generateSpecRequestSchema,
@@ -36,14 +39,22 @@ export function assertSpecSnapshotSize(
   }
 }
 
-function getGoogleModel() {
+export function assertSpecHasRequiredHeadings(spec: string): void {
+  const missing = missingRequiredSpecHeadings(spec);
+  if (missing.length > 0) {
+    throw new AbortTaskRunError(
+      `Gemini returned a spec missing required sections: ${missing.join(", ")}`,
+    );
+  }
+}
+
+function getGoogleClient() {
   const apiKey = process.env.GOOGLE_AI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!apiKey) {
     return null;
   }
 
-  const google = createGoogle({ apiKey });
-  return google("gemini-3.8-flash");
+  return createGoogle({ apiKey });
 }
 
 function createLiveblocksClient(): Liveblocks {
@@ -93,27 +104,53 @@ export const generateSpec = schemaTask({
       chatCount: input.chatHistory.length,
     });
 
-    const model = getGoogleModel();
-    if (!model) {
+    const google = getGoogleClient();
+    if (!google) {
       metadata.set("status", "error");
       throw new AbortTaskRunError("GOOGLE_AI_API_KEY is not set");
     }
 
+    const prompt = buildSpecPrompt({
+      ...input,
+      nodes,
+      edges,
+    });
+
     try {
-      const result = await generateText({
-        model,
-        prompt: buildSpecPrompt({
-          ...input,
-          nodes,
-          edges,
-        }),
+      const generated = await generateWithCapacityRetry({
+        generate: async (modelId) => {
+          const result = await generateText({
+            model: google(modelId),
+            prompt,
+            maxRetries: 1,
+          });
+          return result.text.trim();
+        },
+        wait: async (seconds) => {
+          await wait.for({ seconds });
+        },
+        onRetry: ({ modelId, attempt, waitSeconds, fallback }) => {
+          logger.warn(
+            fallback
+              ? "Gemini overloaded, switching to fallback model"
+              : "Gemini overloaded, waiting before retry",
+            { modelId, attempt, waitSeconds, fallback },
+          );
+        },
       });
 
-      const spec = result.text.trim();
+      logger.info("Gemini spec model selected", {
+        projectId: input.projectId,
+        modelId: generated.modelId,
+      });
+
+      const spec = generated.value;
       if (!spec) {
         metadata.set("status", "error");
         throw new AbortTaskRunError("Gemini returned an empty spec");
       }
+
+      assertSpecHasRequiredHeadings(spec);
 
       const saved = await saveGeneratedSpec(input.projectId, spec);
 
@@ -131,6 +168,11 @@ export const generateSpec = schemaTask({
         projectId: input.projectId,
         message: error instanceof Error ? error.message : "unknown",
       });
+      if (isDailyQuotaError(error)) {
+        throw new AbortTaskRunError(
+          "Gemini daily quota exceeded. Wait for the quota to reset or use a paid Google AI key.",
+        );
+      }
       throw error;
     }
   },
