@@ -28,6 +28,7 @@
 - Project records, spec records, and task run records belong in PostgreSQL.
 - Canvas content and Markdown output are stored in and retrieved from Vercel Blob.
 - The blob URL is stored in the database (`canvasJsonPath`, `filePath`) as the reference to the artifact.
+- Canvas snapshots are saved through `PUT /api/projects/[projectId]/canvas`. The handler writes the blob URL to `Project.canvasJsonPath` and returns `{ ok: true }`. The blob URL is not returned to the client. `GET` returns `{ canvas }` only.
 
 ## Auth and Collaboration Model
 
@@ -50,15 +51,15 @@
 ### Design Generation
 
 - Input: user prompt and project context resolved from `roomId`.
-- Execution: `POST /api/ai/design` authenticates the user, resolves project access from `roomId` (never a client-supplied `projectId`), creates a `TaskRun`, and triggers `design-agent` with `projectId` and `roomId` both set to `project.id`. Gemini (`@ai-sdk/google`) plans canvas operations, then the task applies them through `mutateFlow`.
-- Output: structured node and edge updates written into the shared Liveblocks room, plus AI presence (`cursor`, `thinking`) and `ai-status-feed` messages so every participant can see progress.
+- Execution: `POST /api/ai/design` authenticates the user, resolves project access from `roomId` (never a client-supplied `projectId`), rejects a prompt outside 1–4000 characters after trim, counts that user's `TaskRun` rows in the last 10 minutes (shared with spec starts; 10 is the cap), creates a `TaskRun`, and triggers `design-agent` with `projectId` and `roomId` both set to `project.id`. Gemini (`@ai-sdk/google`) plans canvas operations, then the task applies them through `mutateFlow`. An 11th start in that window returns `{ "error": "Too many AI requests" }` with `429`. Token, list, and download routes are not rate-limited.
+- Output: structured node and edge updates written into the shared Liveblocks room, plus AI presence (`cursor`, `thinking`) and `ai-status-feed` messages so every participant can see progress. Keyword fallback uses a commerce domain pack when the prompt matches `e-commerce|ecommerce|commerce|shop|storefront|checkout`, producing Storefront, API Gateway, Catalog, Cart, Checkout, Payment, Inventory, Notification, Webhook Worker, and Orders DB with flow-specific edges. Chat and CI/CD packs are later work.
 - Room chat lives in a separate Liveblocks feed named `ai-chat`. Status and chat messages stay in their own feeds. The AI sidebar has AI Architect, Chat, and Specs tabs. Chat writes only to `ai-chat`. AI Architect also writes to `ai-chat` and starts a design run through `POST /api/ai/design`, stores `{ runId, publicToken }`, and tracks the run with `useRealtimeRun`. Canvas nodes and edges still update only through Liveblocks.
 
 ### Spec Generation
 
 - Input: `roomId`, `chatHistory`, and project context resolved from `roomId`. The current canvas graph is read on the server from the Liveblocks room snapshot. Client `nodes` and `edges` are ignored.
-- Execution: `POST /api/ai/spec` authenticates the user, resolves project access from `roomId` (never a client-supplied `projectId`), creates a `TaskRun`, and triggers `generate-spec`. `POST /api/ai/spec/token` issues a 1-hour Trigger.dev public access token scoped to that run, only for the run owner. Gemini (`@ai-sdk/google`) writes the spec as task output.
-- Output of the generation task: plain Markdown. After generation, the task uploads that Markdown to Vercel Blob at `specs/{projectId}/{specId}.md` and stores the blob URL on `ProjectSpec.filePath`. Authenticated owners and collaborators list metadata through `GET /api/projects/[projectId]/specs` and download through `GET /api/projects/[projectId]/specs/[specId]/download`, which streams the file after project and spec access checks. The Specs tab previews that same download as Markdown. Blob URLs are not returned to the client.
+- Execution: `POST /api/ai/spec` authenticates the user, resolves project access from `roomId` (never a client-supplied `projectId`), rejects `chatHistory` over 50 messages or a sender over 80 / content over 2000 characters, counts that user's `TaskRun` rows in the last 10 minutes (shared with design starts; 10 is the cap), creates a `TaskRun`, and triggers `generate-spec`. After the Liveblocks snapshot, more than 200 nodes or 400 edges fails the task without sending the graph to Gemini. `POST /api/ai/spec/token` issues a 1-hour Trigger.dev public access token scoped to that run, only for the run owner. Gemini (`@ai-sdk/google`) writes the spec as task output.
+- Output of the generation task: plain Markdown with these sections in order: Overview, Components, APIs / events, Data model, Authn / Authz, Threat model, Failure modes, and Open questions. Inferred lines are prefixed with `Assumption:`. After generation, the task uploads that Markdown to Vercel Blob at `specs/{projectId}/{specId}.md` and stores the blob URL on `ProjectSpec.filePath`. Authenticated owners and collaborators list metadata through `GET /api/projects/[projectId]/specs` and download through `GET /api/projects/[projectId]/specs/[specId]/download`, which streams the file after project and spec access checks. The Specs tab previews that same download as Markdown. Preview sanitizes with `rehype-sanitize`, keeps only `http:` / `https:` links, and drops images. Download stays raw Markdown. Blob URLs are not returned to the client.
 
 ## Invariants
 

@@ -1,5 +1,6 @@
 import { tasks } from "@trigger.dev/sdk";
 
+import { rejectIfAiRateLimited } from "@/lib/ai-rate-limit";
 import { jsonError } from "@/lib/http";
 import { getAccessibleProject } from "@/lib/project-access";
 import { readJsonBody } from "@/lib/project-body";
@@ -32,6 +33,11 @@ export async function POST(request: Request) {
       existing ? "Forbidden" : "Project not found",
       existing ? 403 : 404,
     );
+  }
+
+  const rateLimited = await rejectIfAiRateLimited(authResult.identity.userId);
+  if (rateLimited) {
+    return rateLimited;
   }
 
   const handle = await tasks.trigger<typeof generateSpec>("generate-spec", {

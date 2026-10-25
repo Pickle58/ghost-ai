@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { jsonError } from "@/lib/http";
 import type { ClerkIdentity } from "@/lib/project-access";
 
 import {
@@ -63,6 +64,33 @@ describe("design request parse/resolve", () => {
       return;
     }
     assert.equal(blank.status, 400);
+  });
+
+  it("rejects an oversize prompt with 400", async () => {
+    const parsed = parseDesignRequest({
+      prompt: "x".repeat(4001),
+      roomId: "owned-room",
+    });
+    assert.equal(parsed.ok, false);
+    if (parsed.ok) {
+      return;
+    }
+    assert.equal(parsed.status, 400);
+
+    const response = jsonError(parsed.error, parsed.status);
+    assert.equal(response.status, 400);
+  });
+
+  it("accepts a prompt of 4000 characters after trim", () => {
+    const parsed = parseDesignRequest({
+      prompt: `  ${"x".repeat(4000)}  `,
+      roomId: "owned-room",
+    });
+    assert.equal(parsed.ok, true);
+    if (!parsed.ok) {
+      return;
+    }
+    assert.equal(parsed.prompt.length, 4000);
   });
 
   it("uses the loaded project id as both task targets", () => {

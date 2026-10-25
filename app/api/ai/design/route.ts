@@ -1,3 +1,4 @@
+import { rejectIfAiRateLimited } from "@/lib/ai-rate-limit";
 import { resolveDesignRunRequest } from "@/lib/design-request";
 import { jsonError } from "@/lib/http";
 import { getAccessibleProject } from "@/lib/project-access";
@@ -34,6 +35,11 @@ export async function POST(request: Request) {
       existing ? "Forbidden" : "Project not found",
       existing ? 403 : 404,
     );
+  }
+
+  const rateLimited = await rejectIfAiRateLimited(authResult.identity.userId);
+  if (rateLimited) {
+    return rateLimited;
   }
 
   const runId = `design-${crypto.randomUUID()}`;

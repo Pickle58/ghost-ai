@@ -2,6 +2,11 @@ import { z } from "zod";
 
 import { aiChatMessageSchema } from "@/types/tasks";
 
+export const specChatMessageSchema = aiChatMessageSchema.extend({
+  sender: z.string().min(1).max(80),
+  content: z.string().min(1).max(2000),
+});
+
 export const generateSpecNodeSchema = z.object({
   id: z.string().min(1),
   type: z.string().optional(),
@@ -36,7 +41,7 @@ export const generateSpecEdgeSchema = z.object({
 
 export const generateSpecRequestSchema = z.object({
   roomId: z.string().min(1),
-  chatHistory: z.array(aiChatMessageSchema),
+  chatHistory: z.array(specChatMessageSchema).max(50),
 });
 
 export const generateSpecTaskSchema = generateSpecRequestSchema.extend({
@@ -49,6 +54,7 @@ export const generateSpecTokenRequestSchema = z.object({
 
 export type GenerateSpecNode = z.infer<typeof generateSpecNodeSchema>;
 export type GenerateSpecEdge = z.infer<typeof generateSpecEdgeSchema>;
+export type SpecChatMessage = z.infer<typeof specChatMessageSchema>;
 export type GenerateSpecRequest = z.infer<typeof generateSpecRequestSchema>;
 export type GenerateSpecTaskInput = z.infer<typeof generateSpecTaskSchema>;
 export type GenerateSpecTokenRequest = z.infer<

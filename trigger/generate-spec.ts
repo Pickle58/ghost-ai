@@ -19,6 +19,23 @@ export type { GenerateSpecTaskInput } from "@/types/spec-generation";
 
 export { buildSpecPrompt } from "./spec-prompt";
 
+export const MAX_SPEC_SNAPSHOT_NODES = 200;
+export const MAX_SPEC_SNAPSHOT_EDGES = 400;
+
+export function assertSpecSnapshotSize(
+  nodeCount: number,
+  edgeCount: number,
+): void {
+  if (
+    nodeCount > MAX_SPEC_SNAPSHOT_NODES ||
+    edgeCount > MAX_SPEC_SNAPSHOT_EDGES
+  ) {
+    throw new AbortTaskRunError(
+      `Canvas snapshot is too large to generate a spec (${nodeCount} nodes, ${edgeCount} edges). Maximum is ${MAX_SPEC_SNAPSHOT_NODES} nodes and ${MAX_SPEC_SNAPSHOT_EDGES} edges.`,
+    );
+  }
+}
+
 function getGoogleModel() {
   const apiKey = process.env.GOOGLE_AI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!apiKey) {
@@ -51,14 +68,23 @@ export const generateSpec = schemaTask({
       .set("roomId", input.roomId);
 
     const snapshot = await readCanvasSnapshot(createLiveblocksClient(), input.roomId);
-    const nodes = toSpecNodes(snapshot.nodes);
-    const edges = toSpecEdges(snapshot.edges);
 
     logger.info("Read Liveblocks canvas snapshot", {
       roomId: input.roomId,
       nodeCount: snapshot.nodes.length,
       edgeCount: snapshot.edges.length,
     });
+
+    try {
+      assertSpecSnapshotSize(snapshot.nodes.length, snapshot.edges.length);
+    } catch (error) {
+      metadata.set("status", "error");
+      throw error;
+    }
+
+    const nodes = toSpecNodes(snapshot.nodes);
+    const edges = toSpecEdges(snapshot.edges);
+
     logger.info("Generating technical spec", {
       projectId: input.projectId,
       roomId: input.roomId,

@@ -3,6 +3,7 @@
 import { Download } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import Markdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import type { ProjectSpecItem } from "@/hooks/use-project-specs";
 import { specDownloadPath } from "@/lib/spec-api";
+import { filterPreviewHref } from "@/lib/spec-preview";
 
 interface SpecPreviewDialogProps {
   projectId: string;
@@ -119,7 +121,9 @@ function SpecPreviewContent({ preview }: { preview: SpecPreviewState }) {
     case "ready":
       return (
         <div className="spec-markdown block space-y-3 break-words whitespace-normal text-sm leading-6 text-copy-secondary">
-          <Markdown components={markdownComponents}>{preview.content}</Markdown>
+          <Markdown rehypePlugins={[rehypeSanitize]} components={markdownComponents}>
+            {preview.content}
+          </Markdown>
         </div>
       );
     default: {
@@ -226,16 +230,24 @@ const markdownComponents = {
       {children}
     </blockquote>
   ),
-  a: ({ href, children }: MarkdownAnchorProps) => (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="text-brand underline underline-offset-3"
-    >
-      {children}
-    </a>
-  ),
+  a: ({ href, children }: MarkdownAnchorProps) => {
+    const safeHref = filterPreviewHref("link", href);
+    if (safeHref === null) {
+      return children;
+    }
+
+    return (
+      <a
+        href={safeHref}
+        target="_blank"
+        rel="noreferrer"
+        className="text-brand underline underline-offset-3"
+      >
+        {children}
+      </a>
+    );
+  },
+  img: () => null,
   code: ({ children }: MarkdownElementProps) => (
     <code className="rounded-md bg-subtle px-1 py-0.5 font-mono text-[0.8rem] text-copy-primary">
       {children}

@@ -136,6 +136,7 @@ export async function generateDesignPlanFromPrompt(
         "Use add-node, move-node, resize-node, update-node-data, delete-node, add-edge, and delete-edge.",
         "Give every new node an explicit position and size. Space nodes at least 260px apart horizontally and 160px apart vertically.",
         "Keep labels short and architecture-specific.",
+        "For e-commerce, ecommerce, commerce, shop, storefront, or checkout requests, include these bounded contexts: Storefront, API Gateway, Catalog Service, Cart Service, Checkout Service, Payment Service, Inventory Service, Notification Service, Webhook Worker, and Orders DB. Connect them with flow-specific edges such as browse, cart, checkout, pay, reserve, webhook, and notify instead of a single request/data chain.",
         canvas
           ? `Current canvas JSON: ${JSON.stringify(canvas)}`
           : "The canvas is currently empty.",

@@ -6,6 +6,11 @@ import {
   generateSpecTaskSchema,
 } from "@/types/spec-generation";
 
+import {
+  assertSpecSnapshotSize,
+  MAX_SPEC_SNAPSHOT_EDGES,
+  MAX_SPEC_SNAPSHOT_NODES,
+} from "./generate-spec";
 import { buildSpecPrompt } from "./spec-prompt";
 
 describe("generate spec payload", () => {
@@ -78,32 +83,127 @@ describe("generate spec payload", () => {
     assert.equal("nodes" in parsed, false);
     assert.equal("edges" in parsed, false);
   });
-});
 
-describe("generate spec prompt", () => {
-  it("includes canvas labels and chat content", () => {
-    const prompt = buildSpecPrompt({
-      projectId: "spec-check-abc123",
+  it("rejects an oversize chat message", () => {
+    const result = generateSpecRequestSchema.safeParse({
       roomId: "spec-check-abc123",
       chatHistory: [
         {
           sender: "Ada",
           role: "user",
+          content: "x".repeat(2001),
+          timestamp: 1_700_000_000_000,
+        },
+      ],
+    });
+
+    assert.equal(result.success, false);
+  });
+
+  it("rejects more than 50 chat messages or an oversize sender", () => {
+    const tooMany = generateSpecRequestSchema.safeParse({
+      roomId: "spec-check-abc123",
+      chatHistory: Array.from({ length: 51 }, (_, index) => ({
+        sender: "Ada",
+        role: "user" as const,
+        content: `Message ${index}`,
+        timestamp: 1_700_000_000_000 + index,
+      })),
+    });
+    assert.equal(tooMany.success, false);
+
+    const longSender = generateSpecRequestSchema.safeParse({
+      roomId: "spec-check-abc123",
+      chatHistory: [
+        {
+          sender: "A".repeat(81),
+          role: "user",
           content: "Document the checkout path.",
           timestamp: 1_700_000_000_000,
         },
       ],
-      nodes: [
-        {
-          id: "db-1",
-          data: { label: "Orders DB", shape: "cylinder" },
-        },
-      ],
-      edges: [],
     });
+    assert.equal(longSender.success, false);
+  });
+});
+
+describe("generate spec snapshot caps", () => {
+  it("fails the task when nodes or edges exceed the snapshot cap", () => {
+    assert.doesNotThrow(() =>
+      assertSpecSnapshotSize(MAX_SPEC_SNAPSHOT_NODES, MAX_SPEC_SNAPSHOT_EDGES),
+    );
+
+    assert.throws(
+      () => assertSpecSnapshotSize(MAX_SPEC_SNAPSHOT_NODES + 1, 0),
+      /too large to generate a spec/,
+    );
+    assert.throws(
+      () => assertSpecSnapshotSize(0, MAX_SPEC_SNAPSHOT_EDGES + 1),
+      /too large to generate a spec/,
+    );
+  });
+});
+
+const REQUIRED_SPEC_SECTIONS = [
+  "Overview",
+  "Components",
+  "APIs / events",
+  "Data model",
+  "Authn / Authz",
+  "Threat model",
+  "Failure modes",
+  "Open questions",
+] as const;
+
+function samplePromptInput() {
+  return {
+    projectId: "spec-check-abc123",
+    roomId: "spec-check-abc123",
+    chatHistory: [
+      {
+        sender: "Ada",
+        role: "user" as const,
+        content: "Document the checkout path.",
+        timestamp: 1_700_000_000_000,
+      },
+    ],
+    nodes: [
+      {
+        id: "db-1",
+        data: { label: "Orders DB", shape: "cylinder" },
+      },
+    ],
+    edges: [],
+  };
+}
+
+describe("generate spec prompt", () => {
+  it("includes canvas labels and chat content", () => {
+    const prompt = buildSpecPrompt(samplePromptInput());
 
     assert.match(prompt, /Orders DB/);
     assert.match(prompt, /Document the checkout path/);
-    assert.match(prompt, /spec-check-abc123/);
+  });
+
+  it("requires all eight spec sections and Assumption: for inferred detail", () => {
+    const prompt = buildSpecPrompt(samplePromptInput());
+
+    for (const section of REQUIRED_SPEC_SECTIONS) {
+      assert.ok(
+        prompt.includes(section),
+        `expected prompt to include required section "${section}"`,
+      );
+    }
+
+    assert.ok(
+      prompt.includes("Assumption:"),
+      "expected prompt to require Assumption: for inferred detail",
+    );
+  });
+
+  it("does not inject raw project or room ids", () => {
+    const prompt = buildSpecPrompt(samplePromptInput());
+
+    assert.equal(prompt.includes("spec-check-abc123"), false);
   });
 });
