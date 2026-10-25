@@ -190,11 +190,29 @@ export const DESIGN_LAYOUT = {
   rowGap: 160,
 } as const;
 
-const ENTITY_TEMPLATES: Array<{
+const COMMERCE_DOMAIN_PATTERN = /e-commerce|ecommerce|commerce|shop|storefront|checkout/i;
+
+interface EntityTemplate {
   keyword: RegExp;
   label: string;
   shape: NodeShape;
-}> = [
+}
+
+const COMMERCE_TEMPLATES: EntityTemplate[] = [
+  { keyword: COMMERCE_DOMAIN_PATTERN, label: "Storefront", shape: "rectangle" },
+  { keyword: COMMERCE_DOMAIN_PATTERN, label: "API Gateway", shape: "pill" },
+  { keyword: COMMERCE_DOMAIN_PATTERN, label: "Catalog Service", shape: "pill" },
+  { keyword: COMMERCE_DOMAIN_PATTERN, label: "Cart Service", shape: "pill" },
+  { keyword: COMMERCE_DOMAIN_PATTERN, label: "Checkout Service", shape: "pill" },
+  { keyword: COMMERCE_DOMAIN_PATTERN, label: "Payment Service", shape: "hexagon" },
+  { keyword: COMMERCE_DOMAIN_PATTERN, label: "Inventory Service", shape: "pill" },
+  { keyword: COMMERCE_DOMAIN_PATTERN, label: "Notification Service", shape: "rectangle" },
+  { keyword: COMMERCE_DOMAIN_PATTERN, label: "Webhook Worker", shape: "rectangle" },
+  { keyword: COMMERCE_DOMAIN_PATTERN, label: "Orders DB", shape: "cylinder" },
+];
+
+const ENTITY_TEMPLATES: EntityTemplate[] = [
+  ...COMMERCE_TEMPLATES,
   { keyword: /browser|web app|frontend|client/i, label: "Browser", shape: "rectangle" },
   { keyword: /api gateway|gateway|api|backend/i, label: "API Gateway", shape: "pill" },
   { keyword: /auth|login|identity/i, label: "Auth Service", shape: "circle" },
@@ -202,6 +220,18 @@ const ENTITY_TEMPLATES: Array<{
   { keyword: /queue|messaging|events/i, label: "Message Queue", shape: "hexagon" },
   { keyword: /cache|redis/i, label: "Cache", shape: "diamond" },
   { keyword: /worker|consumer|jobs/i, label: "Worker", shape: "rectangle" },
+];
+
+const COMMERCE_FLOW_EDGES: Array<{ source: string; target: string; label: string }> = [
+  { source: "Storefront", target: "API Gateway", label: "browse" },
+  { source: "API Gateway", target: "Catalog Service", label: "browse" },
+  { source: "API Gateway", target: "Cart Service", label: "cart" },
+  { source: "API Gateway", target: "Checkout Service", label: "checkout" },
+  { source: "Checkout Service", target: "Payment Service", label: "pay" },
+  { source: "Checkout Service", target: "Inventory Service", label: "reserve" },
+  { source: "Payment Service", target: "Webhook Worker", label: "webhook" },
+  { source: "Webhook Worker", target: "Notification Service", label: "notify" },
+  { source: "Checkout Service", target: "Orders DB", label: "order" },
 ];
 
 export function sanitizeNodeShape(value: string | undefined): NodeShape {
@@ -346,23 +376,8 @@ export function normalizeDesignPlan(
   };
 }
 
-export function buildDesignPlan(prompt: string): DesignPlan {
-  const trimmed = prompt.trim();
-  if (!trimmed) {
-    return { status: "fallback", operations: [] };
-  }
-
-  const labels = new Map<string, string>();
-  for (const { keyword, label } of ENTITY_TEMPLATES) {
-    if (keyword.test(trimmed)) {
-      labels.set(label, label);
-    }
-  }
-
-  const fallbackLabels = ["Browser", "API Gateway", "Auth Service", "Database"];
-  const selected = labels.size > 0 ? Array.from(labels.values()) : fallbackLabels;
-
-  const operations: DesignPlanOperation[] = selected.map((label, index) => {
+function createNodeOperations(selected: string[]): DesignAddNodeOperation[] {
+  return selected.map((label, index) => {
     const shape =
       ENTITY_TEMPLATES.find((entry) => entry.label === label)?.shape ??
       (index % 2 === 0 ? "rectangle" : "pill");
@@ -375,13 +390,59 @@ export function buildDesignPlan(prompt: string): DesignPlan {
       color: NODE_COLORS[index % NODE_COLORS.length].fill,
     };
   });
+}
 
+function buildCommerceDesignPlan(): DesignPlan {
+  const selected = COMMERCE_TEMPLATES.map((template) => template.label);
+  const nodes = createNodeOperations(selected);
+  const nodeIds = new Map(nodes.map((node) => [node.label, node.id]));
+
+  const operations: DesignPlanOperation[] = [
+    ...nodes,
+    ...COMMERCE_FLOW_EDGES.map((edge, index) => ({
+      type: "add-edge" as const,
+      id: `edge-${index + 1}`,
+      source: nodeIds.get(edge.source) ?? "",
+      target: nodeIds.get(edge.target) ?? "",
+      label: edge.label,
+    })),
+  ];
+
+  return normalizeDesignPlan({
+    status: "ready",
+    summary: `Planned ${selected.length} architecture components for the requested system design.`,
+    operations,
+  });
+}
+
+export function buildDesignPlan(prompt: string): DesignPlan {
+  const trimmed = prompt.trim();
+  if (!trimmed) {
+    return { status: "fallback", operations: [] };
+  }
+
+  if (COMMERCE_DOMAIN_PATTERN.test(trimmed)) {
+    return buildCommerceDesignPlan();
+  }
+
+  const labels = new Map<string, string>();
+  for (const { keyword, label } of ENTITY_TEMPLATES) {
+    if (keyword.test(trimmed)) {
+      labels.set(label, label);
+    }
+  }
+
+  const fallbackLabels = ["Browser", "API Gateway", "Auth Service", "Database"];
+  const selected = labels.size > 0 ? Array.from(labels.values()) : fallbackLabels;
+  const nodes = createNodeOperations(selected);
+
+  const operations: DesignPlanOperation[] = [...nodes];
   for (let index = 1; index < selected.length; index += 1) {
     operations.push({
       type: "add-edge",
       id: `edge-${index}`,
-      source: operations[index - 1]?.id ?? "",
-      target: operations[index]?.id ?? "",
+      source: nodes[index - 1]?.id ?? "",
+      target: nodes[index]?.id ?? "",
       label: index === 1 ? "request" : "data",
     });
   }

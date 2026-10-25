@@ -159,6 +159,47 @@ describe("design agent planning", () => {
     );
   });
 
+  it("builds a commerce graph for Design an e-commerce backend", () => {
+    const plan = buildDesignPlan("Design an e-commerce backend");
+    const labels = plan.operations
+      .filter((operation) => operation.type === "add-node")
+      .map((operation) => operation.label);
+
+    assert.ok(labels.includes("Catalog Service"));
+    assert.ok(labels.includes("Cart Service"));
+    assert.ok(labels.includes("Checkout Service"));
+    assert.ok(labels.includes("Payment Service"));
+    assert.ok(labels.includes("Inventory Service"));
+
+    const edgeLabels = plan.operations
+      .filter((operation) => operation.type === "add-edge")
+      .map((operation) => operation.label);
+
+    assert.ok(edgeLabels.includes("browse"));
+    assert.ok(edgeLabels.includes("cart"));
+    assert.ok(edgeLabels.includes("checkout"));
+    assert.ok(edgeLabels.includes("pay"));
+    assert.ok(edgeLabels.includes("reserve"));
+    assert.ok(edgeLabels.includes("webhook"));
+    assert.ok(edgeLabels.includes("notify"));
+    assert.ok(!edgeLabels.every((label) => label === "request" || label === "data"));
+  });
+
+  it("does not turn a CI/CD prompt into a commerce graph", () => {
+    const plan = buildDesignPlan(
+      "Design a CI/CD pipeline with a source repository, build runner, and production deploy.",
+    );
+    const labels = plan.operations
+      .filter((operation) => operation.type === "add-node")
+      .map((operation) => operation.label);
+
+    assert.ok(!labels.includes("Catalog Service"));
+    assert.ok(!labels.includes("Cart Service"));
+    assert.ok(!labels.includes("Checkout Service"));
+    assert.ok(!labels.includes("Payment Service"));
+    assert.ok(!labels.includes("Inventory Service"));
+  });
+
   it("normalizes unsupported plan values onto the canvas palette and layout", () => {
     const plan = normalizeDesignPlan({
       status: "ready",

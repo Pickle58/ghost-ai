@@ -65,8 +65,8 @@ export async function PUT(request: Request, context: CanvasRouteContext) {
   }
 
   try {
-    const canvasUrl = await saveCanvasSnapshot(projectId, bodyResult.body);
-    return Response.json({ canvasUrl }, { status: 200 });
+    await saveCanvasSnapshot(projectId, bodyResult.body);
+    return Response.json({ ok: true }, { status: 200 });
   } catch (error) {
     console.error("Canvas save failed", error);
     return jsonError("Canvas save failed", 500);
