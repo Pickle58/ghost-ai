@@ -190,7 +190,10 @@ export const DESIGN_LAYOUT = {
   rowGap: 160,
 } as const;
 
-const COMMERCE_DOMAIN_PATTERN = /e-commerce|ecommerce|commerce|shop|storefront|checkout/i;
+export const DEFAULT_EDGE_LABEL = "HTTP";
+
+const COMMERCE_DOMAIN_PATTERN =
+  /\b(?:e-commerce|ecommerce|commerce|shop|storefront|checkout)\b/i;
 
 interface EntityTemplate {
   keyword: RegExp;
@@ -240,6 +243,34 @@ export function sanitizeNodeShape(value: string | undefined): NodeShape {
   }
 
   return DEFAULT_NODE_SHAPE;
+}
+
+export function inferEdgeLabel(targetLabel = ""): string {
+  if (/\b(?:db|database|store|lake|archive)\b/i.test(targetLabel)) {
+    return "Read/Write";
+  }
+
+  if (/\b(?:queue|broker|event|pubsub)\b/i.test(targetLabel)) {
+    return "Publish Event";
+  }
+
+  if (/\bcache\b/i.test(targetLabel)) {
+    return "cache";
+  }
+
+  return DEFAULT_EDGE_LABEL;
+}
+
+export function sanitizeEdgeLabel(
+  label: string | undefined,
+  targetLabel = "",
+): string {
+  const trimmed = label?.trim() ?? "";
+  if (trimmed) {
+    return trimmed;
+  }
+
+  return inferEdgeLabel(targetLabel);
 }
 
 export function sanitizeNodeColor(
@@ -308,6 +339,13 @@ export function normalizeDesignPlan(
     return { status: "fallback", operations: [] };
   }
 
+  const nodeLabels = new Map<string, string>();
+  for (const operation of operations) {
+    if (operation.type === "add-node" && operation.id) {
+      nodeLabels.set(operation.id, (operation.label ?? "").trim());
+    }
+  }
+
   const normalized = applyLayoutRules(
     operations.map((operation): DesignPlanOperation => {
       switch (operation.type) {
@@ -329,7 +367,10 @@ export function normalizeDesignPlan(
             id: operation.id || `edge-${slugify(`${operation.source}-${operation.target}`)}`,
             source: operation.source ?? "",
             target: operation.target ?? "",
-            label: operation.label ?? "",
+            label: sanitizeEdgeLabel(
+              operation.label,
+              nodeLabels.get(operation.target ?? ""),
+            ),
           };
         case "move-node":
           return {
@@ -443,7 +484,7 @@ export function buildDesignPlan(prompt: string): DesignPlan {
       id: `edge-${index}`,
       source: nodes[index - 1]?.id ?? "",
       target: nodes[index]?.id ?? "",
-      label: index === 1 ? "request" : "data",
+      label: inferEdgeLabel(selected[index]),
     });
   }
 
@@ -530,7 +571,10 @@ export function applyDesignOperations(
           source: operation.source,
           target: operation.target,
           data: {
-            label: operation.label ?? "",
+            label: sanitizeEdgeLabel(
+              operation.label,
+              flow.getNode(operation.target)?.data.label,
+            ),
           },
           style: {
             stroke: "var(--text-muted)",

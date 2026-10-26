@@ -38,6 +38,7 @@ import {
   verifyDesignRunToken,
   type DesignFlowMutator,
 } from "./design-logic";
+import { buildDesignPrompt } from "./design-prompt";
 
 describe("design agent token", () => {
   beforeEach(() => {
@@ -136,8 +137,8 @@ describe("design agent planning", () => {
     assert.ok(plan.operations.length > 0);
     assert.ok(plan.operations.some((op) => op.type === "add-node"));
     assert.ok(plan.operations.every((op) => {
-      if (op.type === "add-node") {
-        return typeof op.label === "string" && op.label.length > 0;
+      if (op.type === "add-node" || op.type === "add-edge") {
+        return typeof op.label === "string" && op.label.trim().length > 0;
       }
       return true;
     }));
@@ -155,8 +156,40 @@ describe("design agent planning", () => {
     assert.deepEqual(labels, ["Database", "Message Queue"]);
     assert.equal(
       plan.operations.find((operation) => operation.type === "add-edge")?.label,
-      "request",
+      "Publish Event",
     );
+  });
+
+  it("labels generic fallback edges by destination, not request/data", () => {
+    const plan = buildDesignPlan(
+      "Design a simple user auth flow with a browser, API gateway, auth service, and database",
+    );
+    const edgeLabels = plan.operations
+      .filter((operation) => operation.type === "add-edge")
+      .map((operation) => operation.label);
+
+    assert.ok(edgeLabels.includes("HTTP"));
+    assert.ok(edgeLabels.includes("Read/Write"));
+    assert.ok(!edgeLabels.includes("request"));
+    assert.ok(!edgeLabels.includes("data"));
+  });
+
+  it("fills a missing add-edge label from the destination node so the canvas pill can render", () => {
+    const plan = normalizeDesignPlan({
+      status: "ready",
+      operations: [
+        { type: "add-node", id: "gateway", label: "API Gateway" },
+        { type: "add-node", id: "db", label: "Orders DB" },
+        { type: "add-edge", id: "e1", source: "gateway", target: "db", label: "   " },
+      ],
+    });
+    const edge = plan.operations.find((operation) => operation.type === "add-edge");
+
+    assert.equal(edge?.type, "add-edge");
+    if (edge?.type !== "add-edge") {
+      return;
+    }
+    assert.equal(edge.label, "Read/Write");
   });
 
   it("builds a commerce graph for Design an e-commerce backend", () => {
@@ -171,9 +204,13 @@ describe("design agent planning", () => {
     assert.ok(labels.includes("Payment Service"));
     assert.ok(labels.includes("Inventory Service"));
 
-    const edgeLabels = plan.operations
-      .filter((operation) => operation.type === "add-edge")
-      .map((operation) => operation.label);
+    const nodesByLabel = new Map(
+      plan.operations
+        .filter((operation) => operation.type === "add-node")
+        .map((operation) => [operation.label, operation.id]),
+    );
+    const edges = plan.operations.filter((operation) => operation.type === "add-edge");
+    const edgeLabels = edges.map((operation) => operation.label);
 
     assert.ok(edgeLabels.includes("browse"));
     assert.ok(edgeLabels.includes("cart"));
@@ -183,6 +220,35 @@ describe("design agent planning", () => {
     assert.ok(edgeLabels.includes("webhook"));
     assert.ok(edgeLabels.includes("notify"));
     assert.ok(!edgeLabels.every((label) => label === "request" || label === "data"));
+    assert.ok(
+      edges.some(
+        (edge) =>
+          edge.source === nodesByLabel.get("Checkout Service") &&
+          edge.target === nodesByLabel.get("Payment Service") &&
+          edge.label === "pay",
+      ),
+    );
+    assert.ok(
+      edges.some(
+        (edge) =>
+          edge.source === nodesByLabel.get("Payment Service") &&
+          edge.target === nodesByLabel.get("Webhook Worker") &&
+          edge.label === "webhook",
+      ),
+    );
+  });
+
+  it("does not treat a workshop scheduling prompt as commerce", () => {
+    const plan = buildDesignPlan("Design a workshop scheduling application");
+    const labels = plan.operations
+      .filter((operation) => operation.type === "add-node")
+      .map((operation) => operation.label);
+
+    assert.ok(!labels.includes("Catalog Service"));
+    assert.ok(!labels.includes("Cart Service"));
+    assert.ok(!labels.includes("Checkout Service"));
+    assert.ok(!labels.includes("Payment Service"));
+    assert.ok(!labels.includes("Inventory Service"));
   });
 
   it("does not turn a CI/CD prompt into a commerce graph", () => {
@@ -228,6 +294,16 @@ describe("design agent planning", () => {
     assert.ok((operation.height ?? 0) >= MIN_NODE_SIZE.height);
     assert.equal(operation.x, DESIGN_LAYOUT.originX);
     assert.equal(operation.y, DESIGN_LAYOUT.originY);
+  });
+
+  it("requires Gemini to label every add-edge with a short protocol or flow name", () => {
+    const prompt = buildDesignPrompt({ prompt: "Design a checkout" });
+
+    assert.match(prompt, /Never leave an edge unlabeled/);
+    assert.match(prompt, /HTTP/);
+    assert.match(prompt, /Read\/Write/);
+    assert.match(prompt, /Publish Event/);
+    assert.match(prompt, /Design a checkout/);
   });
 });
 
@@ -298,6 +374,12 @@ describe("design agent canvas operations", () => {
     assert.equal(auth?.data.color, "#0F2E18");
     assert.equal(edge?.type, CANVAS_EDGE_TYPE);
     assert.equal(edge?.data?.label, "HTTP");
+
+    applyDesignOperations(flow, [
+      { type: "add-node", id: "queue", label: "Message Queue" },
+      { type: "add-edge", id: "auth-queue", source: "auth", target: "queue" },
+    ]);
+    assert.equal(flow.getEdge("auth-queue")?.data?.label, "Publish Event");
 
     applyDesignOperations(flow, [
       { type: "delete-edge", id: "gateway-auth" },

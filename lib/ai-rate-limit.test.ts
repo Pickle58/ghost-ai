@@ -5,6 +5,7 @@ import {
   AI_RATE_LIMIT_ERROR,
   AI_RATE_LIMIT_MAX_RUNS,
   aiRateLimitResponse,
+  aiRateLimitResponseAfterReservation,
 } from "@/lib/ai-rate-limit";
 import { parseDesignRequest } from "@/lib/design-request";
 import { jsonError } from "@/lib/http";
@@ -16,6 +17,16 @@ describe("AI rate limit", () => {
     assert.equal(tenth, null);
 
     const eleventh = aiRateLimitResponse(AI_RATE_LIMIT_MAX_RUNS);
+    assert.ok(eleventh);
+    assert.equal(eleventh.status, 429);
+    assert.deepEqual(await eleventh.json(), { error: AI_RATE_LIMIT_ERROR });
+  });
+
+  it("counts a reserved slot so the 11th concurrent start is still 429", async () => {
+    const tenth = aiRateLimitResponseAfterReservation(AI_RATE_LIMIT_MAX_RUNS);
+    assert.equal(tenth, null);
+
+    const eleventh = aiRateLimitResponseAfterReservation(AI_RATE_LIMIT_MAX_RUNS + 1);
     assert.ok(eleventh);
     assert.equal(eleventh.status, 429);
     assert.deepEqual(await eleventh.json(), { error: AI_RATE_LIMIT_ERROR });
